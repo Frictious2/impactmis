@@ -1,0 +1,105 @@
+<section class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1">Attendance Detail</h1>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="badge rounded-pill badge-soft-secondary"><%= record.staff_code %></span>
+      <span class="badge rounded-pill badge-soft-secondary"><%= new Date(record.attendance_date).toLocaleDateString() %></span>
+      <span class="badge rounded-pill badge-soft-secondary"><%= record.status %></span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/attendance/<%= record.id %>/edit" class="btn btn-primary">Edit</a>
+    <a href="/attendance" class="btn btn-outline-secondary">Back to List</a>
+  </div>
+</section>
+
+<div class="row g-4">
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Staff Details</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Name</dt>
+          <dd class="col-sm-7"><%= record.staff_name %></dd>
+          <dt class="col-sm-5">Department</dt>
+          <dd class="col-sm-7"><%= record.department_name || 'Unassigned' %></dd>
+          <dt class="col-sm-5">Position</dt>
+          <dd class="col-sm-7"><%= record.position_title %></dd>
+          <dt class="col-sm-5">Type</dt>
+          <dd class="col-sm-7 text-capitalize"><%= record.employment_type %></dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Attendance Summary</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Date</dt>
+          <dd class="col-sm-7"><%= new Date(record.attendance_date).toLocaleDateString() %></dd>
+          <dt class="col-sm-5">Status</dt>
+          <dd class="col-sm-7"><%= record.status %></dd>
+          <dt class="col-sm-5">Check In</dt>
+          <dd class="col-sm-7"><%= record.check_in_time ? String(record.check_in_time).slice(0, 5) : '—' %></dd>
+          <dt class="col-sm-5">Check Out</dt>
+          <dd class="col-sm-7"><%= record.check_out_time ? String(record.check_out_time).slice(0, 5) : '—' %></dd>
+          <dt class="col-sm-5">Hours Worked</dt>
+          <dd class="col-sm-7"><%= record.hours_worked || '—' %></dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Approval</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Approval Status</dt>
+          <dd class="col-sm-7"><%= record.approval_status %></dd>
+          <dt class="col-sm-5">Entered By</dt>
+          <dd class="col-sm-7"><%= record.entered_by_name || 'System' %></dd>
+          <dt class="col-sm-5">Approved By</dt>
+          <dd class="col-sm-7"><%= record.approved_by_name || 'Not yet approved' %></dd>
+          <dt class="col-sm-5">Rejection Reason</dt>
+          <dd class="col-sm-7"><%= record.rejection_reason || '—' %></dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Audit-Friendly Timestamps</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Created At</dt>
+          <dd class="col-sm-7"><%= new Date(record.created_at).toLocaleString() %></dd>
+          <dt class="col-sm-5">Updated At</dt>
+          <dd class="col-sm-7"><%= new Date(record.updated_at).toLocaleString() %></dd>
+          <dt class="col-sm-5">Location</dt>
+          <dd class="col-sm-7"><%= record.location || '—' %></dd>
+          <dt class="col-sm-5">Notes</dt>
+          <dd class="col-sm-7"><%= record.notes || '—' %></dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+  <% if (canApprove) { %>
+    <div class="col-12">
+      <section class="card section-card">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Approval Actions</h2>
+          <div class="d-flex flex-column flex-lg-row gap-4">
+            <form action="/attendance/<%= record.id %>/approve" method="POST">
+              <button type="submit" class="btn btn-success">Approve Attendance</button>
+            </form>
+            <form action="/attendance/<%= record.id %>/reject" method="POST" class="d-flex flex-column flex-lg-row gap-2 flex-grow-1">
+              <input name="rejection_reason" type="text" class="form-control" placeholder="Reason for rejection" />
+              <button type="submit" class="btn btn-outline-danger">Reject Attendance</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </div>
+  <% } %>
+</div>

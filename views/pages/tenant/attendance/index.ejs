@@ -1,0 +1,118 @@
+<section class="card section-card mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Attendance</h1>
+        <p class="text-muted mb-0">Capture daily attendance and manage review status.</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/attendance/create" class="btn btn-primary">Single Entry</a>
+        <a href="/attendance/bulk" class="btn btn-outline-secondary">Bulk Entry</a>
+      </div>
+    </div>
+
+    <form method="GET" action="/attendance" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label for="date_from" class="form-label">Date From</label>
+        <input id="date_from" name="date_from" type="date" class="form-control" value="<%= filters.date_from %>" />
+      </div>
+      <div class="col-md-3">
+        <label for="date_to" class="form-label">Date To</label>
+        <input id="date_to" name="date_to" type="date" class="form-control" value="<%= filters.date_to %>" />
+      </div>
+      <div class="col-md-3">
+        <label for="staff_member_id" class="form-label">Staff Member</label>
+        <select id="staff_member_id" name="staff_member_id" class="form-select">
+          <option value="">All</option>
+          <% staffMembers.forEach((staffMember) => { %>
+            <option value="<%= staffMember.id %>" <%= String(filters.staff_member_id) === String(staffMember.id) ? 'selected' : '' %>><%= staffMember.staff_code %> - <%= staffMember.full_name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="department_id" class="form-label">Department</label>
+        <select id="department_id" name="department_id" class="form-select">
+          <option value="">All</option>
+          <% departments.forEach((department) => { %>
+            <option value="<%= department.id %>" <%= String(filters.department_id) === String(department.id) ? 'selected' : '' %>><%= department.department_name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="status" class="form-label">Status</label>
+        <select id="status" name="status" class="form-select">
+          <option value="">All</option>
+          <% attendanceStatusOptions.forEach((option) => { %>
+            <option value="<%= option.value %>" <%= filters.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="approval_status" class="form-label">Approval Status</label>
+        <select id="approval_status" name="approval_status" class="form-select">
+          <option value="">All</option>
+          <% approvalOptions.forEach((option) => { %>
+            <option value="<%= option.value %>" <%= filters.approval_status === option.value ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-dark flex-grow-1">Filter</button>
+        <a href="/attendance" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="card section-card">
+  <div class="card-body p-0">
+    <% if (!records.length) { %>
+      <div class="p-4">
+        <h2 class="h5">No attendance records found</h2>
+        <p class="text-muted mb-3">Start with a single entry or use the bulk form for daily capture.</p>
+      </div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Staff Code</th>
+              <th>Staff Name</th>
+              <th>Department</th>
+              <th>Status</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Hours</th>
+              <th>Approval</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% records.forEach((record) => { %>
+              <tr>
+                <td><%= new Date(record.attendance_date).toLocaleDateString() %></td>
+                <td class="fw-semibold"><%= record.staff_code %></td>
+                <td><%= record.staff_name %></td>
+                <td><%= record.department_name || 'Unassigned' %></td>
+                <td><span class="badge rounded-pill badge-soft-secondary"><%= record.status %></span></td>
+                <td><%= record.check_in_time ? String(record.check_in_time).slice(0, 5) : '—' %></td>
+                <td><%= record.check_out_time ? String(record.check_out_time).slice(0, 5) : '—' %></td>
+                <td><%= record.hours_worked || '—' %></td>
+                <td>
+                  <span class="badge rounded-pill <%= record.approval_status === 'approved' ? 'badge-soft-success' : record.approval_status === 'rejected' ? 'badge-soft-danger' : record.approval_status === 'submitted' ? 'badge-soft-warning' : 'badge-soft-secondary' %>">
+                    <%= record.approval_status %>
+                  </span>
+                </td>
+                <td class="text-end">
+                  <a href="/attendance/<%= record.id %>" class="btn btn-sm btn-outline-primary">View</a>
+                  <a href="/attendance/<%= record.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</section>

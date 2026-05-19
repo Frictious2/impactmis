@@ -283,6 +283,32 @@ async function countActiveVolunteersByTenantId(tenantId, db = pool) {
   return row.total;
 }
 
+async function listActiveAttendanceEligibleByTenantId(tenantId, db = pool) {
+  const [rows] = await db.query(
+    `
+      SELECT
+        sm.id,
+        sm.staff_code,
+        CONCAT_WS(' ', sm.first_name, sm.middle_name, sm.last_name) AS full_name,
+        sm.position_title,
+        sm.employment_type,
+        sm.department_id,
+        d.department_name
+      FROM staff_members sm
+      LEFT JOIN departments d
+        ON d.id = sm.department_id
+       AND d.tenant_id = sm.tenant_id
+      WHERE sm.tenant_id = ?
+        AND sm.status = 'active'
+        AND sm.employment_type IN ('staff', 'volunteer', 'consultant', 'intern')
+      ORDER BY sm.staff_code ASC, full_name ASC
+    `,
+    [tenantId]
+  );
+
+  return rows;
+}
+
 module.exports = {
   listStaff,
   findStaffById,
@@ -293,5 +319,6 @@ module.exports = {
   existsStaffCodeForTenant,
   existsEmailForTenant,
   countActiveByTenantId,
-  countActiveVolunteersByTenantId
+  countActiveVolunteersByTenantId,
+  listActiveAttendanceEligibleByTenantId
 };

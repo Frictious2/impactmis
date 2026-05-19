@@ -1,0 +1,60 @@
+<% const validationMap = {}; %>
+<% (validationErrors || []).forEach((error) => { validationMap[error.path] = error.msg; }); %>
+
+<form action="/attendance/bulk" method="POST" class="card section-card">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Bulk Attendance Entry</h1>
+        <p class="text-muted mb-0">Capture a full day of attendance for multiple active staff and volunteers.</p>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <label for="attendance_date" class="form-label">Attendance Date</label>
+        <input id="attendance_date" name="attendance_date" type="date" class="form-control <%= validationMap.attendance_date ? 'is-invalid' : '' %>" value="<%= attendanceDate %>" />
+        <% if (validationMap.attendance_date) { %><div class="invalid-feedback"><%= validationMap.attendance_date %></div><% } %>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Staff Member</th>
+            <th>Status</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% staffMembers.forEach((staffMember, index) => { %>
+            <tr>
+              <td>
+                <input type="hidden" name="entries[<%= index %>][staff_member_id]" value="<%= staffMember.id %>" />
+                <div class="fw-semibold"><%= staffMember.staff_code %> - <%= staffMember.full_name %></div>
+                <div class="small text-muted"><%= staffMember.department_name || 'Unassigned' %> · <%= staffMember.position_title %></div>
+              </td>
+              <td>
+                <select name="entries[<%= index %>][status]" class="form-select form-select-sm">
+                  <% attendanceStatusOptions.forEach((option) => { %>
+                    <option value="<%= option.value %>" <%= option.value === 'present' ? 'selected' : '' %>><%= option.label %></option>
+                  <% }) %>
+                </select>
+              </td>
+              <td><input name="entries[<%= index %>][check_in_time]" type="time" class="form-control form-control-sm" /></td>
+              <td><input name="entries[<%= index %>][check_out_time]" type="time" class="form-control form-control-sm" /></td>
+              <td><input name="entries[<%= index %>][notes]" type="text" class="form-control form-control-sm" /></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card-footer bg-white border-0 pt-0 pb-4 px-4">
+    <button type="submit" class="btn btn-primary">Save Bulk Attendance</button>
+    <a href="/attendance" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>

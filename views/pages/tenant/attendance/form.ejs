@@ -1,0 +1,56 @@
+<% const validationMap = {}; %>
+<% (validationErrors || []).forEach((error) => { validationMap[error.path] = error.msg; }); %>
+
+<form action="<%= formAction %>" method="POST" class="card section-card">
+  <div class="card-body">
+    <h1 class="h4 mb-3"><%= formTitle %></h1>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="staff_member_id" class="form-label">Staff Member</label>
+        <select id="staff_member_id" name="staff_member_id" class="form-select <%= validationMap.staff_member_id ? 'is-invalid' : '' %>">
+          <option value="">Select staff member</option>
+          <% staffMembers.forEach((staffMember) => { %>
+            <option value="<%= staffMember.id %>" <%= String(formData.staff_member_id) === String(staffMember.id) ? 'selected' : '' %>><%= staffMember.staff_code %> - <%= staffMember.full_name %></option>
+          <% }) %>
+        </select>
+        <% if (validationMap.staff_member_id) { %><div class="invalid-feedback"><%= validationMap.staff_member_id %></div><% } %>
+      </div>
+      <div class="col-md-3">
+        <label for="attendance_date" class="form-label">Attendance Date</label>
+        <input id="attendance_date" name="attendance_date" type="date" class="form-control <%= validationMap.attendance_date ? 'is-invalid' : '' %>" value="<%= formData.attendance_date %>" />
+        <% if (validationMap.attendance_date) { %><div class="invalid-feedback"><%= validationMap.attendance_date %></div><% } %>
+      </div>
+      <div class="col-md-3">
+        <label for="status" class="form-label">Status</label>
+        <select id="status" name="status" class="form-select <%= validationMap.status ? 'is-invalid' : '' %>">
+          <% attendanceStatusOptions.forEach((option) => { %>
+            <option value="<%= option.value %>" <%= formData.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+        <% if (validationMap.status) { %><div class="invalid-feedback"><%= validationMap.status %></div><% } %>
+      </div>
+      <div class="col-md-3">
+        <label for="check_in_time" class="form-label">Check In</label>
+        <input id="check_in_time" name="check_in_time" type="time" class="form-control <%= validationMap.check_in_time ? 'is-invalid' : '' %>" value="<%= formData.check_in_time %>" />
+        <% if (validationMap.check_in_time) { %><div class="invalid-feedback"><%= validationMap.check_in_time %></div><% } %>
+      </div>
+      <div class="col-md-3">
+        <label for="check_out_time" class="form-label">Check Out</label>
+        <input id="check_out_time" name="check_out_time" type="time" class="form-control <%= validationMap.check_out_time ? 'is-invalid' : '' %>" value="<%= formData.check_out_time %>" />
+        <% if (validationMap.check_out_time) { %><div class="invalid-feedback"><%= validationMap.check_out_time %></div><% } %>
+      </div>
+      <div class="col-md-6">
+        <label for="location" class="form-label">Location</label>
+        <input id="location" name="location" type="text" class="form-control" value="<%= formData.location %>" />
+      </div>
+      <div class="col-12">
+        <label for="notes" class="form-label">Notes</label>
+        <textarea id="notes" name="notes" class="form-control" rows="4"><%= formData.notes %></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer bg-white border-0 pt-0 pb-4 px-4">
+    <button type="submit" class="btn btn-primary"><%= submitLabel %></button>
+    <a href="<%= cancelHref %>" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>

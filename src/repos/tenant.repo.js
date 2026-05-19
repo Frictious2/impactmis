@@ -5,6 +5,7 @@ const userRepo = require("./user.repo");
 const approvalWorkflowRepo = require("./approval-workflow.repo");
 const auditLogRepo = require("./audit-log.repo");
 const staffRepo = require("./staff.repo");
+const attendanceRepo = require("./attendance.repo");
 
 async function findById(id, db = pool) {
   const [rows] = await db.query("SELECT * FROM tenants WHERE id = ? LIMIT 1", [id]);
@@ -198,7 +199,9 @@ async function getTenantDashboardStats(tenantId) {
     approvalWorkflow,
     auditLogCount,
     activeStaffCount,
-    activeVolunteerCount
+    activeVolunteerCount,
+    todayAttendanceCount,
+    pendingAttendanceApprovalsCount
   ] =
     await Promise.all([
       organizationProfileRepo.findByTenantId(tenantId),
@@ -207,7 +210,9 @@ async function getTenantDashboardStats(tenantId) {
       approvalWorkflowRepo.findByTenantId(tenantId),
       auditLogRepo.countByTenantId(tenantId),
       staffRepo.countActiveByTenantId(tenantId),
-      staffRepo.countActiveVolunteersByTenantId(tenantId)
+      staffRepo.countActiveVolunteersByTenantId(tenantId),
+      attendanceRepo.countTodayByTenantId(tenantId),
+      attendanceRepo.countPendingApprovalsByTenantId(tenantId)
     ]);
 
   return {
@@ -216,6 +221,8 @@ async function getTenantDashboardStats(tenantId) {
     activeUserCount,
     activeStaffCount,
     activeVolunteerCount,
+    todayAttendanceCount,
+    pendingAttendanceApprovalsCount,
     workflowCount: approvalWorkflow
       ? [
           approvalWorkflow.attendance_approvals,

@@ -7,7 +7,7 @@
   <nav class="nav flex-column gap-1">
     <a class="nav-link sidebar-link text-dark <%= currentPath === '/dashboard' ? 'active' : '' %>" href="/dashboard">Dashboard</a>
     <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/staff') ? 'active' : '' %>" href="/staff">Staff &amp; Volunteers</a>
-    <a class="nav-link sidebar-link text-dark <%= currentPath === '/attendance' ? 'active' : '' %>" href="/attendance">Attendance</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/attendance') ? 'active' : '' %>" href="/attendance">Attendance</a>
     <a class="nav-link sidebar-link text-dark <%= currentPath === '/projects' ? 'active' : '' %>" href="/projects">Projects</a>
     <a class="nav-link sidebar-link text-dark <%= currentPath === '/payroll' ? 'active' : '' %>" href="/payroll">Payroll</a>
     <a class="nav-link sidebar-link text-dark <%= currentPath === '/reports' ? 'active' : '' %>" href="/reports">Reports</a>

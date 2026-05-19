@@ -1,0 +1,10 @@
+<%- include("form", {
+  formTitle: `Edit Attendance for ${record.staff_name}`,
+  formAction: `/attendance/${record.id}/edit`,
+  submitLabel: "Save Changes",
+  cancelHref: `/attendance/${record.id}`,
+  formData,
+  staffMembers,
+  attendanceStatusOptions,
+  validationErrors
+}) %>

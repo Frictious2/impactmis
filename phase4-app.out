@@ -1,0 +1,16 @@
+ImpactMIS listening on port 3101
+[0mPOST /login [36m302[0m 2090.739 ms - 32[0m
+[0mGET /attendance/create [32m200[0m 293.408 ms - 6196[0m
+[0mPOST /attendance [36m302[0m 265.524 ms - 35[0m
+[0mPOST /attendance [36m302[0m 214.238 ms - 35[0m
+[0mPOST /attendance/bulk [36m302[0m 1822.247 ms - 33[0m
+[0mGET /attendance?date_from=2026-05-19&date_to=2026-05-20&status=present&approval_status=submitted [32m200[0m 904.924 ms - 8995[0m
+[0mGET /attendance/1 [32m200[0m 63.920 ms - 7449[0m
+[0mPOST /attendance/1/edit [36m302[0m 326.096 ms - 35[0m
+[0mPOST /attendance/1/approve [36m302[0m 47.904 ms - 35[0m
+[0mPOST /attendance/3/reject [36m302[0m 449.025 ms - 35[0m
+[0mPOST /login [36m302[0m 675.889 ms - 32[0m
+[0mPOST /attendance/1/approve [36m302[0m 812.946 ms - 35[0m
+[0mGET /attendance/999999 [33m404[0m 146.376 ms - 1360[0m
+[0mGET /dashboard [32m200[0m 86.429 ms - 4735[0m
+[0mGET /audit-logs [32m200[0m 53.023 ms - 7887[0m

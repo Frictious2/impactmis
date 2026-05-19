@@ -7,6 +7,8 @@ const roleRepo = require("../repos/role.repo");
 const approvalWorkflowRepo = require("../repos/approval-workflow.repo");
 const auditLogRepo = require("../repos/audit-log.repo");
 const staffService = require("../services/staff.service");
+const attendanceService = require("../services/attendance.service");
+const staffRepo = require("../repos/staff.repo");
 const tenantAdminService = require("../services/tenant-admin.service");
 const {
   buildOrganizationProfileFormData,
@@ -20,6 +22,31 @@ const {
   getEmploymentTypeOptions,
   getStatusOptions
 } = require("../utils/staff-form");
+const {
+  buildAttendanceFormData,
+  buildAttendanceFilters,
+  getAttendanceStatusOptions,
+  getAttendanceApprovalOptions
+} = require("../utils/attendance-form");
+
+function placeholder(pageTitle, heading, description, breadcrumbLabel) {
+  return (req, res) =>
+    res.render("layouts/tenant-layout", {
+      pageTitle,
+      contentPartial: "../pages/tenant/placeholder",
+      breadcrumbs: [{ label: "Dashboard", href: "/dashboard" }, { label: breadcrumbLabel }],
+      heading,
+      description
+    });
+}
+
+function isAttendanceApprover(user) {
+  return attendanceService.APPROVER_ROLES.has(user.role);
+}
+
+function renderNotFound(res, title) {
+  return res.status(404).render("pages/errors/404", { pageTitle: title });
+}
 
 async function dashboard(req, res, next) {
   try {
@@ -34,17 +61,6 @@ async function dashboard(req, res, next) {
   } catch (error) {
     return next(error);
   }
-}
-
-function placeholder(pageTitle, heading, description, breadcrumbLabel) {
-  return (req, res) =>
-    res.render("layouts/tenant-layout", {
-      pageTitle,
-      contentPartial: "../pages/tenant/placeholder",
-      breadcrumbs: [{ label: "Dashboard", href: "/dashboard" }, { label: breadcrumbLabel }],
-      heading,
-      description
-    });
 }
 
 function licenseExpired(req, res) {
@@ -124,8 +140,7 @@ async function createStaff(req, res, next) {
         departments: departmentsList,
         employmentTypeOptions: getEmploymentTypeOptions(),
         statusOptions: getStatusOptions(),
-        validationErrors: errors.array(),
-        activeVolunteerCount: 0
+        validationErrors: errors.array()
       });
     }
 
@@ -147,7 +162,7 @@ async function showStaffDetail(req, res, next) {
   try {
     const staffMember = await staffService.findStaffById(req.currentUser.tenant_id, req.params.id);
     if (!staffMember) {
-      return res.status(404).render("pages/errors/404", { pageTitle: "Staff Record Not Found" });
+      return renderNotFound(res, "Staff Record Not Found");
     }
 
     return res.render("layouts/tenant-layout", {
@@ -174,7 +189,7 @@ async function showEditStaff(req, res, next) {
     ]);
 
     if (!staffMember) {
-      return res.status(404).render("pages/errors/404", { pageTitle: "Staff Record Not Found" });
+      return renderNotFound(res, "Staff Record Not Found");
     }
 
     return res.render("layouts/tenant-layout", {
@@ -206,7 +221,7 @@ async function updateStaff(req, res, next) {
     ]);
 
     if (!staffMember) {
-      return res.status(404).render("pages/errors/404", { pageTitle: "Staff Record Not Found" });
+      return renderNotFound(res, "Staff Record Not Found");
     }
 
     const errors = validationResult(req);
@@ -264,6 +279,298 @@ async function updateStaffStatus(req, res, next) {
     req.flash("success", `${updated.full_name} status changed to ${updated.status}.`);
     return res.redirect(`/staff/${updated.id}`);
   } catch (error) {
+    return next(error);
+  }
+}
+
+async function attendance(req, res, next) {
+  try {
+    const filters = buildAttendanceFilters(req.query);
+    const [records, staffMembers, departmentsList] = await Promise.all([
+      attendanceService.listAttendance(req.currentUser.tenant_id, filters),
+      staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id),
+      departmentRepo.listByTenantId(req.currentUser.tenant_id)
+    ]);
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Attendance",
+      contentPartial: "../pages/tenant/attendance/index",
+      breadcrumbs: [{ label: "Dashboard", href: "/dashboard" }, { label: "Attendance" }],
+      records,
+      staffMembers,
+      departments: departmentsList,
+      filters,
+      attendanceStatusOptions: getAttendanceStatusOptions(),
+      approvalOptions: getAttendanceApprovalOptions()
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showCreateAttendance(req, res, next) {
+  try {
+    const staffMembers = await staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id);
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Create Attendance Entry",
+      contentPartial: "../pages/tenant/attendance/create",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Attendance", href: "/attendance" },
+        { label: "Single Entry" }
+      ],
+      formData: buildAttendanceFormData({
+        attendance_date: new Date().toISOString().slice(0, 10),
+        status: "present",
+        approval_status: "submitted"
+      }),
+      staffMembers,
+      attendanceStatusOptions: getAttendanceStatusOptions(),
+      approvalOptions: getAttendanceApprovalOptions(),
+      validationErrors: []
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function createAttendance(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const staffMembers = await staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id);
+      return res.status(422).render("layouts/tenant-layout", {
+        pageTitle: "Create Attendance Entry",
+        contentPartial: "../pages/tenant/attendance/create",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Attendance", href: "/attendance" },
+          { label: "Single Entry" }
+        ],
+        formData: buildAttendanceFormData(req.body),
+        staffMembers,
+        attendanceStatusOptions: getAttendanceStatusOptions(),
+        approvalOptions: getAttendanceApprovalOptions(),
+        validationErrors: errors.array()
+      });
+    }
+
+    const record = await attendanceService.createOrUpdateAttendance(
+      req.currentUser.tenant_id,
+      req.body,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Attendance entry saved successfully.");
+    return res.redirect(`/attendance/${record.id}`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showBulkAttendance(req, res, next) {
+  try {
+    const staffMembers = await staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id);
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Bulk Attendance Entry",
+      contentPartial: "../pages/tenant/attendance/bulk",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Attendance", href: "/attendance" },
+        { label: "Bulk Entry" }
+      ],
+      attendanceDate: req.query.attendance_date || new Date().toISOString().slice(0, 10),
+      staffMembers,
+      attendanceStatusOptions: getAttendanceStatusOptions(),
+      validationErrors: []
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function createBulkAttendance(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const staffMembers = await staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id);
+      return res.status(422).render("layouts/tenant-layout", {
+        pageTitle: "Bulk Attendance Entry",
+        contentPartial: "../pages/tenant/attendance/bulk",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Attendance", href: "/attendance" },
+          { label: "Bulk Entry" }
+        ],
+        attendanceDate: req.body.attendance_date,
+        staffMembers,
+        attendanceStatusOptions: getAttendanceStatusOptions(),
+        validationErrors: errors.array()
+      });
+    }
+
+    await attendanceService.bulkCreateAttendance(
+      req.currentUser.tenant_id,
+      req.body.attendance_date,
+      req.body.entries,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Bulk attendance saved successfully.");
+    return res.redirect("/attendance");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showAttendanceDetail(req, res, next) {
+  try {
+    const record = await attendanceService.findAttendanceById(req.currentUser.tenant_id, req.params.id);
+    if (!record) {
+      return renderNotFound(res, "Attendance Record Not Found");
+    }
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Attendance Detail",
+      contentPartial: "../pages/tenant/attendance/show",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Attendance", href: "/attendance" },
+        { label: `${record.staff_name} - ${record.attendance_date}` }
+      ],
+      record,
+      canApprove: isAttendanceApprover(req.currentUser),
+      approvalOptions: getAttendanceApprovalOptions()
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showEditAttendance(req, res, next) {
+  try {
+    const [record, staffMembers] = await Promise.all([
+      attendanceService.findAttendanceById(req.currentUser.tenant_id, req.params.id),
+      staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id)
+    ]);
+
+    if (!record) {
+      return renderNotFound(res, "Attendance Record Not Found");
+    }
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Edit Attendance",
+      contentPartial: "../pages/tenant/attendance/edit",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Attendance", href: "/attendance" },
+        { label: `${record.staff_name} - ${record.attendance_date}`, href: `/attendance/${record.id}` },
+        { label: "Edit" }
+      ],
+      formData: buildAttendanceFormData(record),
+      staffMembers,
+      attendanceStatusOptions: getAttendanceStatusOptions(),
+      approvalOptions: getAttendanceApprovalOptions(),
+      validationErrors: [],
+      record
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateAttendance(req, res, next) {
+  try {
+    const [record, staffMembers] = await Promise.all([
+      attendanceService.findAttendanceById(req.currentUser.tenant_id, req.params.id),
+      staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id)
+    ]);
+
+    if (!record) {
+      return renderNotFound(res, "Attendance Record Not Found");
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).render("layouts/tenant-layout", {
+        pageTitle: "Edit Attendance",
+        contentPartial: "../pages/tenant/attendance/edit",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Attendance", href: "/attendance" },
+          { label: `${record.staff_name} - ${record.attendance_date}`, href: `/attendance/${record.id}` },
+          { label: "Edit" }
+        ],
+        formData: buildAttendanceFormData(req.body),
+        staffMembers,
+        attendanceStatusOptions: getAttendanceStatusOptions(),
+        approvalOptions: getAttendanceApprovalOptions(),
+        validationErrors: errors.array(),
+        record
+      });
+    }
+
+    const updated = await attendanceService.createOrUpdateAttendance(
+      req.currentUser.tenant_id,
+      { ...req.body, id: req.params.id },
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Attendance entry updated successfully.");
+    return res.redirect(`/attendance/${updated.id}`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function approveAttendance(req, res, next) {
+  try {
+    const updated = await attendanceService.approveAttendance(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.currentUser,
+      req.ip
+    );
+
+    req.flash("success", "Attendance approved successfully.");
+    return res.redirect(`/attendance/${updated.id}`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect(`/attendance/${req.params.id}`);
+    }
+    return next(error);
+  }
+}
+
+async function rejectAttendance(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      req.flash("error", errors.array()[0].msg);
+      return res.redirect(`/attendance/${req.params.id}`);
+    }
+
+    const updated = await attendanceService.rejectAttendance(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.currentUser,
+      req.body.rejection_reason,
+      req.ip
+    );
+
+    req.flash("success", "Attendance rejected successfully.");
+    return res.redirect(`/attendance/${updated.id}`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect(`/attendance/${req.params.id}`);
+    }
     return next(error);
   }
 }
@@ -581,12 +888,16 @@ module.exports = {
   showEditStaff,
   updateStaff,
   updateStaffStatus,
-  attendance: placeholder(
-    "Attendance",
-    "Attendance",
-    "Attendance tracking will be implemented in a future phase.",
-    "Attendance"
-  ),
+  attendance,
+  showCreateAttendance,
+  createAttendance,
+  showBulkAttendance,
+  createBulkAttendance,
+  showAttendanceDetail,
+  showEditAttendance,
+  updateAttendance,
+  approveAttendance,
+  rejectAttendance,
   projects: placeholder(
     "Projects",
     "Projects",

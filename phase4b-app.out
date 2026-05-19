@@ -1,0 +1,6 @@
+ImpactMIS listening on port 3102
+[0mPOST /login [36m302[0m 1224.358 ms - 32[0m
+[0mPOST /login [36m302[0m 1400.717 ms - 32[0m
+[0mGET /attendance/5 [33m404[0m 67.088 ms - 1360[0m
+[0mPOST /attendance/4/approve [36m302[0m 132.071 ms - 35[0m
+[0mPOST /attendance/4 [33m404[0m 70.290 ms - 1347[0m

@@ -14,6 +14,14 @@ const {
   approvalWorkflowValidator
 } = require("../validators/tenant-settings.validator");
 const { prepareStaffInput, staffValidator } = require("../validators/staff.validator");
+const {
+  prepareAttendanceInput,
+  prepareBulkAttendanceInput,
+  prepareRejectInput,
+  attendanceValidator,
+  bulkAttendanceValidator,
+  rejectAttendanceValidator
+} = require("../validators/attendance.validator");
 
 const router = express.Router();
 
@@ -30,6 +38,35 @@ router.get("/staff/:id/edit", tenantController.showEditStaff);
 router.post("/staff/:id/edit", prepareStaffInput, staffValidator, tenantController.updateStaff);
 router.post("/staff/:id/status", tenantController.updateStaffStatus);
 router.get("/attendance", tenantController.attendance);
+router.get("/attendance/create", tenantController.showCreateAttendance);
+router.post(
+  "/attendance",
+  prepareAttendanceInput,
+  attendanceValidator,
+  tenantController.createAttendance
+);
+router.get("/attendance/bulk", tenantController.showBulkAttendance);
+router.post(
+  "/attendance/bulk",
+  prepareBulkAttendanceInput,
+  bulkAttendanceValidator,
+  tenantController.createBulkAttendance
+);
+router.get("/attendance/:id", tenantController.showAttendanceDetail);
+router.get("/attendance/:id/edit", tenantController.showEditAttendance);
+router.post(
+  "/attendance/:id/edit",
+  prepareAttendanceInput,
+  attendanceValidator,
+  tenantController.updateAttendance
+);
+router.post("/attendance/:id/approve", tenantController.approveAttendance);
+router.post(
+  "/attendance/:id/reject",
+  prepareRejectInput,
+  rejectAttendanceValidator,
+  tenantController.rejectAttendance
+);
 router.get("/projects", tenantController.projects);
 router.get("/payroll", tenantController.payroll);
 router.get("/reports", tenantController.reports);

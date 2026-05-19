@@ -11,24 +11,24 @@
     <div class="col-sm-6 col-xl-3">
       <div class="card border-0 shadow-sm stat-card">
         <div class="card-body">
+          <div class="text-muted small">Today's Attendance</div>
+          <div class="display-6 fw-semibold"><%= stats.todayAttendanceCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Pending Attendance Approvals</div>
+          <div class="display-6 fw-semibold"><%= stats.pendingAttendanceApprovalsCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
           <div class="text-muted small">Departments</div>
           <div class="display-6 fw-semibold"><%= stats.departmentCount %></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-      <div class="card border-0 shadow-sm stat-card">
-        <div class="card-body">
-          <div class="text-muted small">Active Users</div>
-          <div class="display-6 fw-semibold"><%= stats.activeUserCount %></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-      <div class="card border-0 shadow-sm stat-card">
-        <div class="card-body">
-          <div class="text-muted small">Approval Workflows</div>
-          <div class="display-6 fw-semibold"><%= stats.workflowCount %></div>
         </div>
       </div>
     </div>
@@ -39,7 +39,7 @@
   <div class="card-body">
     <h2 class="h5">Tenant Administration Overview</h2>
     <p class="text-muted mb-0">
-      Active volunteers: <strong><%= stats.activeVolunteerCount %></strong>. Audit entries recorded for this tenant: <strong><%= stats.auditLogCount %></strong>. Business modules will be added in future phases.
+      Active volunteers: <strong><%= stats.activeVolunteerCount %></strong>. Active users: <strong><%= stats.activeUserCount %></strong>. Approval workflows configured: <strong><%= stats.workflowCount %></strong>. Audit entries recorded for this tenant: <strong><%= stats.auditLogCount %></strong>. Business modules will be added in future phases.
     </p>
   </div>
 </section>
