@@ -1,0 +1,40 @@
+<% const validationMap = {}; %>
+<% validationErrors.forEach((error) => { validationMap[error.path] = error.msg; }); %>
+
+<form action="/settings/approvals" method="POST" class="card section-card">
+  <div class="card-body">
+    <h1 class="h4 mb-1">Approval Workflow</h1>
+    <p class="text-muted mb-4">Set how many approvals are required for each workflow area.</p>
+
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label for="attendance_approvals" class="form-label">Attendance Approvals</label>
+        <input id="attendance_approvals" name="attendance_approvals" type="number" min="0" max="10" class="form-control <%= validationMap.attendance_approvals ? 'is-invalid' : '' %>" value="<%= formData.attendance_approvals %>" />
+        <% if (validationMap.attendance_approvals) { %><div class="invalid-feedback"><%= validationMap.attendance_approvals %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="payroll_approvals" class="form-label">Payroll Approvals</label>
+        <input id="payroll_approvals" name="payroll_approvals" type="number" min="0" max="10" class="form-control <%= validationMap.payroll_approvals ? 'is-invalid' : '' %>" value="<%= formData.payroll_approvals %>" />
+        <% if (validationMap.payroll_approvals) { %><div class="invalid-feedback"><%= validationMap.payroll_approvals %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="expense_approvals" class="form-label">Expense Approvals</label>
+        <input id="expense_approvals" name="expense_approvals" type="number" min="0" max="10" class="form-control <%= validationMap.expense_approvals ? 'is-invalid' : '' %>" value="<%= formData.expense_approvals %>" />
+        <% if (validationMap.expense_approvals) { %><div class="invalid-feedback"><%= validationMap.expense_approvals %></div><% } %>
+      </div>
+      <div class="col-md-6">
+        <label for="project_report_approvals" class="form-label">Project Report Approvals</label>
+        <input id="project_report_approvals" name="project_report_approvals" type="number" min="0" max="10" class="form-control <%= validationMap.project_report_approvals ? 'is-invalid' : '' %>" value="<%= formData.project_report_approvals %>" />
+        <% if (validationMap.project_report_approvals) { %><div class="invalid-feedback"><%= validationMap.project_report_approvals %></div><% } %>
+      </div>
+      <div class="col-md-6">
+        <label for="staff_approvals" class="form-label">Staff Approvals</label>
+        <input id="staff_approvals" name="staff_approvals" type="number" min="0" max="10" class="form-control <%= validationMap.staff_approvals ? 'is-invalid' : '' %>" value="<%= formData.staff_approvals %>" />
+        <% if (validationMap.staff_approvals) { %><div class="invalid-feedback"><%= validationMap.staff_approvals %></div><% } %>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer bg-white border-0 pt-0 pb-4 px-4">
+    <button type="submit" class="btn btn-primary">Save Approval Workflow</button>
+  </div>
+</form>

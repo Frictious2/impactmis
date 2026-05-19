@@ -1,0 +1,5 @@
+ImpactMIS listening on port 3000
+[0mPOST /login [36m302[0m 773.345 ms - 42[0m
+[0mPOST /developer/tenants [36m302[0m 615.584 ms - 42[0m
+[0mPOST /developer/tenants/7/suspend [36m302[0m 13.986 ms - 42[0m
+[0mPOST /developer/tenants/7/reactivate [36m302[0m 29.539 ms - 42[0m

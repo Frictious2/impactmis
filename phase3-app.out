@@ -1,0 +1,11 @@
+ImpactMIS listening on port 3100
+[0mPOST /login [36m302[0m 1776.706 ms - 32[0m
+[0mPOST /staff [36m302[0m 131.396 ms - 30[0m
+[0mGET /staff?search=Mary [32m200[0m 312.474 ms - 8371[0m
+[0mGET /staff/create [32m200[0m 99.345 ms - 9618[0m
+[0mGET /staff/3 [32m200[0m 834.251 ms - 8334[0m
+[0mPOST /staff/3/edit [36m302[0m 163.524 ms - 30[0m
+[0mPOST /staff/3/status [36m302[0m 90.375 ms - 30[0m
+[0mGET /staff/2 [33m404[0m 79.136 ms - 1355[0m
+[0mGET /dashboard [32m200[0m 509.430 ms - 4641[0m
+[0mGET /audit-logs [32m200[0m 149.164 ms - 5263[0m

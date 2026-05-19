@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("../partials/head", { pageTitle }) %>
+  </head>
+  <body class="admin-shell bg-body-tertiary">
+    <div class="container-fluid">
+      <div class="row min-vh-100">
+        <aside class="col-12 col-lg-3 col-xl-2 bg-success-subtle sidebar-column p-0 border-end">
+          <%- include("../partials/tenant-sidebar") %>
+        </aside>
+        <div class="col-12 col-lg-9 col-xl-10 d-flex flex-column p-0">
+          <%- include("../partials/topbar") %>
+          <main class="flex-grow-1 p-4">
+            <%- include("../partials/flash") %>
+            <%- include("../partials/breadcrumbs", { breadcrumbs }) %>
+            <%- include(contentPartial) %>
+          </main>
+          <%- include("../partials/footer") %>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

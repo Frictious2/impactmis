@@ -1,0 +1,16 @@
+<% if (breadcrumbs && breadcrumbs.length) { %>
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <% breadcrumbs.forEach((crumb, index) => { %>
+        <% const isLast = index === breadcrumbs.length - 1; %>
+        <li class="breadcrumb-item <%= isLast ? 'active' : '' %>">
+          <% if (!isLast && crumb.href) { %>
+            <a href="<%= crumb.href %>"><%= crumb.label %></a>
+          <% } else { %>
+            <%= crumb.label %>
+          <% } %>
+        </li>
+      <% }) %>
+    </ol>
+  </nav>
+<% } %>

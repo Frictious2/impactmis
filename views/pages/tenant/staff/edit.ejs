@@ -1,0 +1,11 @@
+<%- include("form", {
+  formTitle: `Edit ${staffMember.full_name}`,
+  formAction: `/staff/${staffMember.id}/edit`,
+  submitLabel: "Save Changes",
+  cancelHref: `/staff/${staffMember.id}`,
+  formData,
+  departments,
+  employmentTypeOptions,
+  statusOptions,
+  validationErrors
+}) %>

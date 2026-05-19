@@ -1,0 +1,139 @@
+<% const validationMap = {}; %>
+<% validationErrors.forEach((error) => { validationMap[error.path] = error.msg; }); %>
+
+<form action="/developer/tenants" method="POST" class="d-flex flex-column gap-4">
+  <section class="card section-card">
+    <div class="card-body">
+      <h1 class="h4 mb-3">Create Tenant</h1>
+      <p class="text-muted">Create the tenant profile, initial license, and first NGO/CBO admin in one transaction.</p>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <h2 class="h6 text-uppercase text-muted">NGO/CBO Information</h2>
+        </div>
+        <div class="col-md-6">
+          <label for="name" class="form-label">Name</label>
+          <input id="name" name="name" type="text" class="form-control <%= validationMap.name ? 'is-invalid' : '' %>" value="<%= formData.name %>" />
+          <% if (validationMap.name) { %><div class="invalid-feedback"><%= validationMap.name %></div><% } %>
+        </div>
+        <div class="col-md-3">
+          <label for="tenant_code" class="form-label">Tenant Code</label>
+          <input id="tenant_code" name="tenant_code" type="text" class="form-control <%= validationMap.tenant_code ? 'is-invalid' : '' %>" value="<%= formData.tenant_code %>" />
+          <div class="form-text">Leave blank to auto-generate.</div>
+          <% if (validationMap.tenant_code) { %><div class="invalid-feedback"><%= validationMap.tenant_code %></div><% } %>
+        </div>
+        <div class="col-md-3">
+          <label for="slug" class="form-label">Slug</label>
+          <input id="slug" name="slug" type="text" class="form-control <%= validationMap.slug ? 'is-invalid' : '' %>" value="<%= formData.slug %>" />
+          <div class="form-text">Leave blank to auto-generate.</div>
+          <% if (validationMap.slug) { %><div class="invalid-feedback"><%= validationMap.slug %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="primary_domain" class="form-label">Primary Domain</label>
+          <input id="primary_domain" name="primary_domain" type="text" class="form-control" value="<%= formData.primary_domain %>" />
+        </div>
+        <div class="col-md-4">
+          <label for="contact_name" class="form-label">Contact Name</label>
+          <input id="contact_name" name="contact_name" type="text" class="form-control" value="<%= formData.contact_name %>" />
+        </div>
+        <div class="col-md-4">
+          <label for="contact_email" class="form-label">Contact Email</label>
+          <input id="contact_email" name="contact_email" type="email" class="form-control <%= validationMap.contact_email ? 'is-invalid' : '' %>" value="<%= formData.contact_email %>" />
+          <% if (validationMap.contact_email) { %><div class="invalid-feedback"><%= validationMap.contact_email %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="contact_phone" class="form-label">Contact Phone</label>
+          <input id="contact_phone" name="contact_phone" type="text" class="form-control" value="<%= formData.contact_phone %>" />
+        </div>
+        <div class="col-md-4">
+          <label for="country" class="form-label">Country</label>
+          <input id="country" name="country" type="text" class="form-control" value="<%= formData.country %>" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <div class="card-body">
+      <h2 class="h5 mb-3">Initial License</h2>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="plan_name" class="form-label">Plan Name</label>
+          <input id="plan_name" name="plan_name" type="text" class="form-control <%= validationMap.plan_name ? 'is-invalid' : '' %>" value="<%= formData.plan_name %>" />
+          <% if (validationMap.plan_name) { %><div class="invalid-feedback"><%= validationMap.plan_name %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="duration_months" class="form-label">Duration (Months)</label>
+          <input id="duration_months" name="duration_months" type="number" min="1" class="form-control <%= validationMap.duration_months ? 'is-invalid' : '' %>" value="<%= formData.duration_months %>" />
+          <% if (validationMap.duration_months) { %><div class="invalid-feedback"><%= validationMap.duration_months %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="starts_at" class="form-label">Starts At</label>
+          <input id="starts_at" name="starts_at" type="date" class="form-control <%= validationMap.starts_at ? 'is-invalid' : '' %>" value="<%= formData.starts_at %>" />
+          <% if (validationMap.starts_at) { %><div class="invalid-feedback"><%= validationMap.starts_at %></div><% } %>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Modules Enabled</label>
+          <div class="row g-2">
+            <% moduleCatalog.forEach((module) => { %>
+              <div class="col-md-3">
+                <div class="form-check border rounded-3 p-3 h-100">
+                  <input
+                    id="module_<%= module.code %>"
+                    name="modules"
+                    type="checkbox"
+                    class="form-check-input"
+                    value="<%= module.code %>"
+                    <%= formData.modules.includes(module.code) ? 'checked' : '' %>
+                  />
+                  <label for="module_<%= module.code %>" class="form-check-label"><%= module.label %></label>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+          <% if (validationMap.modules) { %><div class="text-danger small mt-2"><%= validationMap.modules %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="seat_limit" class="form-label">Seat Limit</label>
+          <input id="seat_limit" name="seat_limit" type="number" min="1" class="form-control <%= validationMap.seat_limit ? 'is-invalid' : '' %>" value="<%= formData.seat_limit %>" />
+          <% if (validationMap.seat_limit) { %><div class="invalid-feedback"><%= validationMap.seat_limit %></div><% } %>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <div class="card-body">
+      <h2 class="h5 mb-3">NGO/CBO Admin Account</h2>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="admin_full_name" class="form-label">Full Name</label>
+          <input id="admin_full_name" name="admin_full_name" type="text" class="form-control <%= validationMap.admin_full_name ? 'is-invalid' : '' %>" value="<%= formData.admin_full_name %>" />
+          <% if (validationMap.admin_full_name) { %><div class="invalid-feedback"><%= validationMap.admin_full_name %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="admin_email" class="form-label">Email</label>
+          <input id="admin_email" name="admin_email" type="email" class="form-control <%= validationMap.admin_email ? 'is-invalid' : '' %>" value="<%= formData.admin_email %>" />
+          <% if (validationMap.admin_email) { %><div class="invalid-feedback"><%= validationMap.admin_email %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="temporary_password" class="form-label">Temporary Password</label>
+          <input id="temporary_password" name="temporary_password" type="text" class="form-control <%= validationMap.temporary_password ? 'is-invalid' : '' %>" value="<%= formData.temporary_password %>" />
+          <% if (validationMap.temporary_password) { %><div class="invalid-feedback"><%= validationMap.temporary_password %></div><% } %>
+        </div>
+        <div class="col-12">
+          <div class="form-check">
+            <input name="must_change_password" type="hidden" value="false" />
+            <input id="must_change_password" name="must_change_password" type="checkbox" class="form-check-input" value="true" <%= formData.must_change_password === 'true' ? 'checked' : '' %> />
+            <label for="must_change_password" class="form-check-label">Require password change on first login</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Create Tenant</button>
+    <a href="/developer/tenants" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>

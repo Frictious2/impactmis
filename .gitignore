@@ -1,0 +1,8 @@
+node_modules/
+.env
+*.log
+dev.out
+dev.err
+app-test.out
+app-test.err
+*.cookies

@@ -1,0 +1,131 @@
+<section class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1"><%= staffMember.full_name %></h1>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="badge rounded-pill badge-soft-secondary"><%= staffMember.staff_code %></span>
+      <span class="badge rounded-pill badge-soft-secondary text-capitalize"><%= staffMember.employment_type %></span>
+      <span class="badge rounded-pill <%= staffMember.status === 'active' ? 'badge-soft-success' : staffMember.status === 'inactive' ? 'badge-soft-warning' : 'badge-soft-danger' %>"><%= staffMember.status %></span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/staff/<%= staffMember.id %>/edit" class="btn btn-primary">Edit</a>
+    <a href="/staff" class="btn btn-outline-secondary">Back to List</a>
+  </div>
+</section>
+
+<div class="row g-4">
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Profile Summary</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Full Name</dt>
+          <dd class="col-sm-7"><%= staffMember.full_name %></dd>
+          <dt class="col-sm-5">Gender</dt>
+          <dd class="col-sm-7"><%= staffMember.gender || 'Not set' %></dd>
+          <dt class="col-sm-5">Date of Birth</dt>
+          <dd class="col-sm-7"><%= staffMember.date_of_birth ? new Date(staffMember.date_of_birth).toLocaleDateString() : 'Not set' %></dd>
+          <dt class="col-sm-5">Department</dt>
+          <dd class="col-sm-7"><%= staffMember.department_name || 'Unassigned' %></dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Employment Summary</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Position</dt>
+          <dd class="col-sm-7"><%= staffMember.position_title %></dd>
+          <dt class="col-sm-5">Employment Type</dt>
+          <dd class="col-sm-7 text-capitalize"><%= staffMember.employment_type %></dd>
+          <dt class="col-sm-5">Start Date</dt>
+          <dd class="col-sm-7"><%= new Date(staffMember.start_date).toLocaleDateString() %></dd>
+          <dt class="col-sm-5">End Date</dt>
+          <dd class="col-sm-7"><%= staffMember.end_date ? new Date(staffMember.end_date).toLocaleDateString() : 'Not set' %></dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Contact Details</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Phone</dt>
+          <dd class="col-sm-7"><%= staffMember.phone || 'Not set' %></dd>
+          <dt class="col-sm-5">Email</dt>
+          <dd class="col-sm-7"><%= staffMember.email || 'Not set' %></dd>
+          <dt class="col-sm-5">Address</dt>
+          <dd class="col-sm-7"><%= staffMember.address || 'Not set' %></dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Emergency Contact</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Name</dt>
+          <dd class="col-sm-7"><%= staffMember.emergency_contact_name || 'Not set' %></dd>
+          <dt class="col-sm-5">Phone</dt>
+          <dd class="col-sm-7"><%= staffMember.emergency_contact_phone || 'Not set' %></dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-12">
+    <section class="card section-card">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Notes</h2>
+        <p class="mb-0 text-muted"><%= staffMember.notes || 'No notes recorded.' %></p>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-12">
+    <section class="card section-card">
+      <div class="card-body">
+        <div class="row g-4">
+          <div class="col-lg-7">
+            <h2 class="h5 mb-3">Record History</h2>
+            <dl class="row mb-0">
+              <dt class="col-sm-4">Created At</dt>
+              <dd class="col-sm-8"><%= new Date(staffMember.created_at).toLocaleString() %></dd>
+              <dt class="col-sm-4">Created By</dt>
+              <dd class="col-sm-8"><%= staffMember.created_by_name || 'System' %></dd>
+              <dt class="col-sm-4">Updated At</dt>
+              <dd class="col-sm-8"><%= new Date(staffMember.updated_at).toLocaleString() %></dd>
+              <dt class="col-sm-4">Updated By</dt>
+              <dd class="col-sm-8"><%= staffMember.updated_by_name || 'System' %></dd>
+            </dl>
+          </div>
+          <div class="col-lg-5">
+            <h2 class="h5 mb-3">Change Status</h2>
+            <form action="/staff/<%= staffMember.id %>/status" method="POST" class="d-flex flex-column gap-3">
+              <div>
+                <label for="next_status" class="form-label">Status</label>
+                <select id="next_status" name="next_status" class="form-select">
+                  <% statusOptions.forEach((option) => { %>
+                    <option value="<%= option.value %>" <%= staffMember.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div>
+                <label for="status_end_date" class="form-label">End Date if Exited</label>
+                <input id="status_end_date" name="status_end_date" type="date" class="form-control" value="<%= staffMember.end_date ? String(staffMember.end_date).slice(0, 10) : '' %>" />
+              </div>
+              <button type="submit" class="btn btn-outline-dark">Update Status</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

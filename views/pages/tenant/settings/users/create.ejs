@@ -1,0 +1,65 @@
+<% const validationMap = {}; %>
+<% validationErrors.forEach((error) => { validationMap[error.path] = error.msg; }); %>
+
+<form action="/settings/users" method="POST" class="card section-card">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Create Tenant User</h1>
+        <p class="text-muted mb-0">Add a new user under the current tenant account.</p>
+      </div>
+      <div>
+        <a href="/settings/users" class="btn btn-outline-secondary">Back to Users</a>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="full_name" class="form-label">Full Name</label>
+        <input id="full_name" name="full_name" type="text" class="form-control <%= validationMap.full_name ? 'is-invalid' : '' %>" value="<%= formData.full_name %>" />
+        <% if (validationMap.full_name) { %><div class="invalid-feedback"><%= validationMap.full_name %></div><% } %>
+      </div>
+      <div class="col-md-6">
+        <label for="email" class="form-label">Email</label>
+        <input id="email" name="email" type="email" class="form-control <%= validationMap.email ? 'is-invalid' : '' %>" value="<%= formData.email %>" />
+        <% if (validationMap.email) { %><div class="invalid-feedback"><%= validationMap.email %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="role" class="form-label">Role</label>
+        <select id="role" name="role" class="form-select <%= validationMap.role ? 'is-invalid' : '' %>">
+          <option value="">Select role</option>
+          <% roles.forEach((role) => { %>
+            <option value="<%= role.name %>" <%= formData.role === role.name ? 'selected' : '' %>><%= role.name %></option>
+          <% }) %>
+        </select>
+        <% if (validationMap.role) { %><div class="invalid-feedback"><%= validationMap.role %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="department_id" class="form-label">Department</label>
+        <select id="department_id" name="department_id" class="form-select <%= validationMap.department_id ? 'is-invalid' : '' %>">
+          <option value="">Unassigned</option>
+          <% departments.forEach((department) => { %>
+            <option value="<%= department.id %>" <%= String(formData.department_id) === String(department.id) ? 'selected' : '' %>><%= department.department_name %></option>
+          <% }) %>
+        </select>
+        <% if (validationMap.department_id) { %><div class="invalid-feedback"><%= validationMap.department_id %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="status" class="form-label">Status</label>
+        <select id="status" name="status" class="form-select <%= validationMap.status ? 'is-invalid' : '' %>">
+          <option value="active" <%= formData.status === 'active' ? 'selected' : '' %>>Active</option>
+          <option value="disabled" <%= formData.status === 'disabled' ? 'selected' : '' %>>Disabled</option>
+        </select>
+        <% if (validationMap.status) { %><div class="invalid-feedback"><%= validationMap.status %></div><% } %>
+      </div>
+      <div class="col-md-6">
+        <label for="password" class="form-label">Password</label>
+        <input id="password" name="password" type="text" class="form-control <%= validationMap.password ? 'is-invalid' : '' %>" value="<%= formData.password %>" />
+        <% if (validationMap.password) { %><div class="invalid-feedback"><%= validationMap.password %></div><% } %>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer bg-white border-0 pt-0 pb-4 px-4">
+    <button type="submit" class="btn btn-primary">Create User</button>
+  </div>
+</form>

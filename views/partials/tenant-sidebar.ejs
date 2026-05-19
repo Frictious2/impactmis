@@ -1,0 +1,18 @@
+<div class="p-3">
+  <div class="mb-4">
+    <div class="text-uppercase small text-success">ImpactMIS</div>
+    <h4 class="mb-0"><%= currentTenant ? currentTenant.name : 'Tenant Portal' %></h4>
+  </div>
+
+  <nav class="nav flex-column gap-1">
+    <a class="nav-link sidebar-link text-dark <%= currentPath === '/dashboard' ? 'active' : '' %>" href="/dashboard">Dashboard</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/staff') ? 'active' : '' %>" href="/staff">Staff &amp; Volunteers</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath === '/attendance' ? 'active' : '' %>" href="/attendance">Attendance</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath === '/projects' ? 'active' : '' %>" href="/projects">Projects</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath === '/payroll' ? 'active' : '' %>" href="/payroll">Payroll</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath === '/reports' ? 'active' : '' %>" href="/reports">Reports</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath === '/approvals' ? 'active' : '' %>" href="/approvals">Approvals</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath === '/audit-logs' ? 'active' : '' %>" href="/audit-logs">Audit Logs</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/settings') ? 'active' : '' %>" href="/settings">Settings</a>
+  </nav>
+</div>

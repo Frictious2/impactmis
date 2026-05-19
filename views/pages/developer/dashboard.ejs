@@ -1,0 +1,45 @@
+<section class="mb-4">
+  <div class="row g-3">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Total Tenants</div>
+          <div class="display-6 fw-semibold"><%= stats.totalTenants %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Active Licenses</div>
+          <div class="display-6 fw-semibold"><%= stats.activeLicenses %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Expiring Licenses</div>
+          <div class="display-6 fw-semibold"><%= stats.expiringLicenses %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Suspended Tenants</div>
+          <div class="display-6 fw-semibold"><%= stats.suspendedTenants %></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card border-0 shadow-sm">
+  <div class="card-body">
+    <h2 class="h5">Phase 0 Foundation</h2>
+    <p class="text-muted mb-0">
+      This dashboard is ready for future tenant, licensing, and system administration features.
+    </p>
+  </div>
+</section>

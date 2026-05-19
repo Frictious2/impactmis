@@ -1,0 +1,100 @@
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.admin-shell {
+  color: #1f2937;
+}
+
+.sidebar-column {
+  min-height: 100vh;
+}
+
+.sidebar-link {
+  color: inherit;
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: inherit;
+}
+
+.bg-success-subtle .sidebar-link:hover,
+.bg-success-subtle .sidebar-link.active {
+  background-color: rgba(25, 135, 84, 0.12);
+}
+
+.stat-card {
+  min-height: 100%;
+}
+
+.sidebar-link {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar-link:hover {
+  transform: translateX(2px);
+}
+
+.table-card {
+  overflow: hidden;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+.badge-soft-success {
+  background-color: rgba(25, 135, 84, 0.12);
+  color: #146c43;
+}
+
+.badge-soft-warning {
+  background-color: rgba(255, 193, 7, 0.18);
+  color: #997404;
+}
+
+.badge-soft-danger {
+  background-color: rgba(220, 53, 69, 0.12);
+  color: #b02a37;
+}
+
+.badge-soft-secondary {
+  background-color: rgba(108, 117, 125, 0.14);
+  color: #495057;
+}
+
+.section-card {
+  border: 0;
+  box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.08);
+}
+
+.tenant-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+}
+
+.tenant-summary-item {
+  background: #f8f9fa;
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.settings-grid-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.settings-grid-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.75rem 1.5rem rgba(15, 23, 42, 0.1);
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: rgba(25, 135, 84, 0.08);
+  color: #146c43;
+}

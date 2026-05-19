@@ -1,0 +1,155 @@
+<section class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1"><%= tenant.name %></h1>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="badge rounded-pill <%= tenant.status === 'active' ? 'badge-soft-success' : 'badge-soft-danger' %>"><%= tenant.status %></span>
+      <span class="badge rounded-pill badge-soft-secondary"><%= tenant.tenant_code %></span>
+      <span class="badge rounded-pill badge-soft-secondary"><%= tenant.slug %></span>
+    </div>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="/developer/tenants/<%= tenant.id %>/licenses/new" class="btn btn-primary">Issue / Renew License</a>
+    <% if (tenant.status === 'active') { %>
+      <form method="POST" action="/developer/tenants/<%= tenant.id %>/suspend">
+        <button type="submit" class="btn btn-outline-danger">Suspend Tenant</button>
+      </form>
+    <% } else { %>
+      <form method="POST" action="/developer/tenants/<%= tenant.id %>/reactivate">
+        <button type="submit" class="btn btn-outline-success">Reactivate Tenant</button>
+      </form>
+    <% } %>
+    <a href="/developer/tenants" class="btn btn-outline-secondary">Back to Tenants</a>
+  </div>
+</section>
+
+<section class="tenant-summary-grid mb-4">
+  <div class="tenant-summary-item">
+    <div class="small text-muted">Primary Domain</div>
+    <div class="fw-semibold"><%= tenant.primary_domain || 'Not set' %></div>
+  </div>
+  <div class="tenant-summary-item">
+    <div class="small text-muted">Contact</div>
+    <div class="fw-semibold"><%= tenant.contact_name || 'Not set' %></div>
+    <div class="small text-muted"><%= tenant.contact_email || 'No email' %></div>
+  </div>
+  <div class="tenant-summary-item">
+    <div class="small text-muted">Country</div>
+    <div class="fw-semibold"><%= tenant.country %></div>
+  </div>
+  <div class="tenant-summary-item">
+    <div class="small text-muted">Users</div>
+    <div class="fw-semibold"><%= tenant.user_count %></div>
+  </div>
+</section>
+
+<div class="row g-4">
+  <div class="col-12 col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Current License</h2>
+        <% if (!currentLicense) { %>
+          <p class="text-muted mb-3">This tenant does not have a license yet.</p>
+          <a href="/developer/tenants/<%= tenant.id %>/licenses/new" class="btn btn-primary btn-sm">Issue License</a>
+        <% } else { %>
+          <% const enabledModules = typeof currentLicense.modules_json === 'string' ? JSON.parse(currentLicense.modules_json || '[]') : (currentLicense.modules_json || []); %>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="badge rounded-pill <%= currentLicense.status === 'active' ? 'badge-soft-success' : currentLicense.status === 'revoked' ? 'badge-soft-danger' : 'badge-soft-warning' %>">
+              <%= currentLicense.status %>
+            </span>
+            <span class="badge rounded-pill badge-soft-secondary"><%= currentLicense.plan_name %></span>
+          </div>
+          <dl class="row mb-0">
+            <dt class="col-sm-5">Starts At</dt>
+            <dd class="col-sm-7"><%= new Date(currentLicense.starts_at).toLocaleDateString() %></dd>
+            <dt class="col-sm-5">Expires At</dt>
+            <dd class="col-sm-7"><%= new Date(currentLicense.expires_at).toLocaleDateString() %></dd>
+            <dt class="col-sm-5">Duration</dt>
+            <dd class="col-sm-7"><%= currentLicense.duration_months %> months</dd>
+            <dt class="col-sm-5">Seat Limit</dt>
+            <dd class="col-sm-7"><%= currentLicense.seat_limit %></dd>
+            <dt class="col-sm-5">Modules</dt>
+            <dd class="col-sm-7">
+              <% enabledModules.forEach((module, index, arr) => { %>
+                <span><%= module %><%= index < arr.length - 1 ? ', ' : '' %></span>
+              <% }) %>
+            </dd>
+          </dl>
+        <% } %>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Admin Users</h2>
+        <% if (!adminUsers.length) { %>
+          <p class="text-muted mb-0">No tenant admin users have been created yet.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% adminUsers.forEach((user) => { %>
+                  <tr>
+                    <td>
+                      <div class="fw-semibold"><%= user.full_name %></div>
+                      <div class="small text-muted">Must change password: <%= user.must_change_password ? 'Yes' : 'No' %></div>
+                    </td>
+                    <td><%= user.email %></td>
+                    <td><span class="badge rounded-pill <%= user.status === 'active' ? 'badge-soft-success' : 'badge-soft-danger' %>"><%= user.status %></span></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-12">
+    <section class="card section-card">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Recent Audit Logs</h2>
+        <% if (!recentAuditLogs.length) { %>
+          <p class="text-muted mb-0">No audit activity has been recorded for this tenant yet.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Action</th>
+                  <th>Actor</th>
+                  <th>Entity</th>
+                  <th>When</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% recentAuditLogs.forEach((log) => { %>
+                  <tr>
+                    <td>
+                      <div class="fw-semibold"><%= log.action %></div>
+                      <% if (log.metadata_json) { %>
+                        <div class="small text-muted"><%= JSON.stringify(log.metadata_json) %></div>
+                      <% } %>
+                    </td>
+                    <td><%= log.user_name || 'System' %></td>
+                    <td><%= log.entity_type %> <%= log.entity_id ? `#${log.entity_id}` : '' %></td>
+                    <td><%= new Date(log.created_at).toLocaleString() %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  </div>
+</div>

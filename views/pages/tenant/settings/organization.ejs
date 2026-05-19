@@ -1,0 +1,79 @@
+<% const validationMap = {}; %>
+<% validationErrors.forEach((error) => { validationMap[error.path] = error.msg; }); %>
+
+<form action="/settings/organization" method="POST" class="card section-card">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Organization Profile</h1>
+        <p class="text-muted mb-0">Store the tenant's official profile and organization setup details.</p>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="organization_name" class="form-label">Organization Name</label>
+        <input id="organization_name" name="organization_name" type="text" class="form-control <%= validationMap.organization_name ? 'is-invalid' : '' %>" value="<%= formData.organization_name %>" />
+        <% if (validationMap.organization_name) { %><div class="invalid-feedback"><%= validationMap.organization_name %></div><% } %>
+      </div>
+      <div class="col-md-6">
+        <label for="logo" class="form-label">Logo URL / Path</label>
+        <input id="logo" name="logo" type="text" class="form-control" value="<%= formData.logo %>" />
+      </div>
+      <div class="col-md-6">
+        <label for="address" class="form-label">Address</label>
+        <input id="address" name="address" type="text" class="form-control" value="<%= formData.address %>" />
+      </div>
+      <div class="col-md-3">
+        <label for="city" class="form-label">City</label>
+        <input id="city" name="city" type="text" class="form-control" value="<%= formData.city %>" />
+      </div>
+      <div class="col-md-3">
+        <label for="district" class="form-label">District</label>
+        <input id="district" name="district" type="text" class="form-control" value="<%= formData.district %>" />
+      </div>
+      <div class="col-md-4">
+        <label for="country" class="form-label">Country</label>
+        <input id="country" name="country" type="text" class="form-control" value="<%= formData.country %>" />
+      </div>
+      <div class="col-md-4">
+        <label for="registration_number" class="form-label">Registration Number</label>
+        <input id="registration_number" name="registration_number" type="text" class="form-control" value="<%= formData.registration_number %>" />
+      </div>
+      <div class="col-md-4">
+        <label for="organization_type" class="form-label">Organization Type</label>
+        <input id="organization_type" name="organization_type" type="text" class="form-control" value="<%= formData.organization_type %>" />
+      </div>
+      <div class="col-md-4">
+        <label for="website" class="form-label">Website</label>
+        <input id="website" name="website" type="text" class="form-control <%= validationMap.website ? 'is-invalid' : '' %>" value="<%= formData.website %>" />
+        <% if (validationMap.website) { %><div class="invalid-feedback"><%= validationMap.website %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="email" class="form-label">Email</label>
+        <input id="email" name="email" type="email" class="form-control <%= validationMap.email ? 'is-invalid' : '' %>" value="<%= formData.email %>" />
+        <% if (validationMap.email) { %><div class="invalid-feedback"><%= validationMap.email %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="phone" class="form-label">Phone</label>
+        <input id="phone" name="phone" type="text" class="form-control" value="<%= formData.phone %>" />
+      </div>
+      <div class="col-md-4">
+        <label for="fiscal_year_start_month" class="form-label">Fiscal Year Start Month</label>
+        <select id="fiscal_year_start_month" name="fiscal_year_start_month" class="form-select <%= validationMap.fiscal_year_start_month ? 'is-invalid' : '' %>">
+          <% monthOptions.forEach((month) => { %>
+            <option value="<%= month.value %>" <%= String(month.value) === String(formData.fiscal_year_start_month) ? 'selected' : '' %>><%= month.label %></option>
+          <% }) %>
+        </select>
+        <% if (validationMap.fiscal_year_start_month) { %><div class="invalid-feedback"><%= validationMap.fiscal_year_start_month %></div><% } %>
+      </div>
+      <div class="col-12">
+        <label for="mission_statement" class="form-label">Mission Statement</label>
+        <textarea id="mission_statement" name="mission_statement" class="form-control" rows="4"><%= formData.mission_statement %></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer bg-white border-0 pt-0 pb-4 px-4">
+    <button type="submit" class="btn btn-primary">Save Organization Profile</button>
+  </div>
+</form>

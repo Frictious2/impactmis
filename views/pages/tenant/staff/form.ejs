@@ -1,0 +1,149 @@
+<% const validationMap = {}; %>
+<% validationErrors.forEach((error) => { validationMap[error.path] = error.msg; }); %>
+
+<form action="<%= formAction %>" method="POST" class="d-flex flex-column gap-4">
+  <section class="card section-card">
+    <div class="card-body">
+      <h1 class="h4 mb-3"><%= formTitle %></h1>
+      <div class="row g-3">
+        <div class="col-12">
+          <h2 class="h6 text-uppercase text-muted">Personal Information</h2>
+        </div>
+        <div class="col-md-4">
+          <label for="staff_code" class="form-label">Staff Code</label>
+          <input id="staff_code" name="staff_code" type="text" class="form-control <%= validationMap.staff_code ? 'is-invalid' : '' %>" value="<%= formData.staff_code %>" />
+          <div class="form-text">Leave blank to auto-generate.</div>
+          <% if (validationMap.staff_code) { %><div class="invalid-feedback"><%= validationMap.staff_code %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="first_name" class="form-label">First Name</label>
+          <input id="first_name" name="first_name" type="text" class="form-control <%= validationMap.first_name ? 'is-invalid' : '' %>" value="<%= formData.first_name %>" />
+          <% if (validationMap.first_name) { %><div class="invalid-feedback"><%= validationMap.first_name %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="middle_name" class="form-label">Middle Name</label>
+          <input id="middle_name" name="middle_name" type="text" class="form-control" value="<%= formData.middle_name %>" />
+        </div>
+        <div class="col-md-4">
+          <label for="last_name" class="form-label">Last Name</label>
+          <input id="last_name" name="last_name" type="text" class="form-control <%= validationMap.last_name ? 'is-invalid' : '' %>" value="<%= formData.last_name %>" />
+          <% if (validationMap.last_name) { %><div class="invalid-feedback"><%= validationMap.last_name %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="gender" class="form-label">Gender</label>
+          <input id="gender" name="gender" type="text" class="form-control" value="<%= formData.gender %>" />
+        </div>
+        <div class="col-md-4">
+          <label for="date_of_birth" class="form-label">Date of Birth</label>
+          <input id="date_of_birth" name="date_of_birth" type="date" class="form-control" value="<%= formData.date_of_birth %>" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12">
+          <h2 class="h6 text-uppercase text-muted">Contact Information</h2>
+        </div>
+        <div class="col-md-4">
+          <label for="phone" class="form-label">Phone</label>
+          <input id="phone" name="phone" type="text" class="form-control" value="<%= formData.phone %>" />
+        </div>
+        <div class="col-md-4">
+          <label for="email" class="form-label">Email</label>
+          <input id="email" name="email" type="email" class="form-control <%= validationMap.email ? 'is-invalid' : '' %>" value="<%= formData.email %>" />
+          <% if (validationMap.email) { %><div class="invalid-feedback"><%= validationMap.email %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="address" class="form-label">Address</label>
+          <input id="address" name="address" type="text" class="form-control" value="<%= formData.address %>" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12">
+          <h2 class="h6 text-uppercase text-muted">Employment Information</h2>
+        </div>
+        <div class="col-md-4">
+          <label for="department_id" class="form-label">Department</label>
+          <select id="department_id" name="department_id" class="form-select <%= validationMap.department_id ? 'is-invalid' : '' %>">
+            <option value="">Unassigned</option>
+            <% departments.forEach((department) => { %>
+              <option value="<%= department.id %>" <%= String(formData.department_id) === String(department.id) ? 'selected' : '' %>><%= department.department_name %></option>
+            <% }) %>
+          </select>
+          <% if (validationMap.department_id) { %><div class="invalid-feedback"><%= validationMap.department_id %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="position_title" class="form-label">Position Title</label>
+          <input id="position_title" name="position_title" type="text" class="form-control <%= validationMap.position_title ? 'is-invalid' : '' %>" value="<%= formData.position_title %>" />
+          <% if (validationMap.position_title) { %><div class="invalid-feedback"><%= validationMap.position_title %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="employment_type" class="form-label">Employment Type</label>
+          <select id="employment_type" name="employment_type" class="form-select <%= validationMap.employment_type ? 'is-invalid' : '' %>">
+            <% employmentTypeOptions.forEach((option) => { %>
+              <option value="<%= option.value %>" <%= formData.employment_type === option.value ? 'selected' : '' %>><%= option.label %></option>
+            <% }) %>
+          </select>
+          <% if (validationMap.employment_type) { %><div class="invalid-feedback"><%= validationMap.employment_type %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="start_date" class="form-label">Start Date</label>
+          <input id="start_date" name="start_date" type="date" class="form-control <%= validationMap.start_date ? 'is-invalid' : '' %>" value="<%= formData.start_date %>" />
+          <% if (validationMap.start_date) { %><div class="invalid-feedback"><%= validationMap.start_date %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="end_date" class="form-label">End Date</label>
+          <input id="end_date" name="end_date" type="date" class="form-control <%= validationMap.end_date ? 'is-invalid' : '' %>" value="<%= formData.end_date %>" />
+          <% if (validationMap.end_date) { %><div class="invalid-feedback"><%= validationMap.end_date %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="status" class="form-label">Status</label>
+          <select id="status" name="status" class="form-select <%= validationMap.status ? 'is-invalid' : '' %>">
+            <% statusOptions.forEach((option) => { %>
+              <option value="<%= option.value %>" <%= formData.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+            <% }) %>
+          </select>
+          <% if (validationMap.status) { %><div class="invalid-feedback"><%= validationMap.status %></div><% } %>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12">
+          <h2 class="h6 text-uppercase text-muted">Emergency Contact</h2>
+        </div>
+        <div class="col-md-6">
+          <label for="emergency_contact_name" class="form-label">Emergency Contact Name</label>
+          <input id="emergency_contact_name" name="emergency_contact_name" type="text" class="form-control" value="<%= formData.emergency_contact_name %>" />
+        </div>
+        <div class="col-md-6">
+          <label for="emergency_contact_phone" class="form-label">Emergency Contact Phone</label>
+          <input id="emergency_contact_phone" name="emergency_contact_phone" type="text" class="form-control" value="<%= formData.emergency_contact_phone %>" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <div class="card-body">
+      <label for="notes" class="form-label">Notes</label>
+      <textarea id="notes" name="notes" class="form-control" rows="4"><%= formData.notes %></textarea>
+    </div>
+  </section>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary"><%= submitLabel %></button>
+    <a href="<%= cancelHref %>" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>

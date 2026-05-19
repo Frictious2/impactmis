@@ -1,0 +1,15 @@
+<div class="p-3">
+  <div class="mb-4">
+    <div class="text-uppercase small text-secondary">ImpactMIS</div>
+    <h4 class="mb-0">Developer</h4>
+  </div>
+
+  <nav class="nav flex-column gap-1">
+    <a class="nav-link sidebar-link <%= currentPath === '/developer/dashboard' ? 'active' : '' %>" href="/developer/dashboard">Dashboard</a>
+    <a class="nav-link sidebar-link <%= currentPath.startsWith('/developer/tenants') ? 'active' : '' %>" href="/developer/tenants">Tenants</a>
+    <a class="nav-link sidebar-link <%= currentPath === '/developer/licenses' ? 'active' : '' %>" href="/developer/licenses">Licenses</a>
+    <a class="nav-link sidebar-link <%= currentPath === '/developer/users' ? 'active' : '' %>" href="/developer/users">Users</a>
+    <a class="nav-link sidebar-link <%= currentPath === '/developer/audit-logs' ? 'active' : '' %>" href="/developer/audit-logs">Audit Logs</a>
+    <a class="nav-link sidebar-link <%= currentPath === '/developer/settings' ? 'active' : '' %>" href="/developer/settings">Settings</a>
+  </nav>
+</div>

@@ -1,0 +1,17 @@
+<section class="card border-0 shadow-sm">
+  <div class="card-body">
+    <% if (tenantAccessIssue === 'suspended') { %>
+      <h1 class="h4">Tenant Suspended</h1>
+      <p class="text-muted">
+        Your organization account is currently suspended and cannot access the tenant dashboard.
+      </p>
+      <p class="mb-0">Please contact the system administrator or your developer support team.</p>
+    <% } else { %>
+      <h1 class="h4">License Expired</h1>
+      <p class="text-muted">
+        Your organization does not currently have an active license for ImpactMIS.
+      </p>
+      <p class="mb-0">Please contact the system administrator or your developer support team.</p>
+    <% } %>
+  </div>
+</section>
