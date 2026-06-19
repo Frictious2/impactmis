@@ -1,0 +1,23 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div><h1 class="h4 mb-1">Expenses</h1><p class="text-muted mb-0">Track project and operational expenses.</p></div>
+  <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="/finance/categories">Categories</a><% if (canCreateExpense) { %><a class="btn btn-success" href="/expenses/create">Create Expense</a><% } %></div>
+</section>
+<section class="card border-0 shadow-sm mb-4"><div class="card-body">
+  <form class="row g-2">
+    <div class="col-md-2"><input class="form-control" name="search" placeholder="Search" value="<%= filters.search %>"></div>
+    <div class="col-md-2"><select class="form-select" name="project_id"><option value="">All projects</option><% projects.forEach((project) => { %><option value="<%= project.id %>" <%= String(filters.project_id) === String(project.id) ? 'selected' : '' %>><%= project.project_code %></option><% }) %></select></div>
+    <div class="col-md-2"><select class="form-select" name="category_id"><option value="">All categories</option><% categories.forEach((category) => { %><option value="<%= category.id %>" <%= String(filters.category_id) === String(category.id) ? 'selected' : '' %>><%= category.name %></option><% }) %></select></div>
+    <div class="col-md-2"><select class="form-select" name="status"><option value="">All statuses</option><% statusOptions.forEach((status) => { %><option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>><%= status %></option><% }) %></select></div>
+    <div class="col-md-2"><input class="form-control" name="date_from" type="date" value="<%= filters.date_from %>"></div>
+    <div class="col-md-2"><button class="btn btn-outline-success w-100" type="submit">Filter</button></div>
+  </form>
+</div></section>
+<section class="card border-0 shadow-sm"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+  <thead class="table-light"><tr><th>Code</th><th>Date</th><th>Project</th><th>Category</th><th>Description</th><th>Amount</th><th>Status</th><th>Method</th><th class="text-end">Actions</th></tr></thead>
+  <tbody>
+    <% if (!expenses.length) { %><tr><td colspan="9" class="text-center text-muted py-5">No expenses found.</td></tr><% } %>
+    <% expenses.forEach((expense) => { %><tr>
+      <td class="fw-semibold"><%= expense.expense_code %></td><td><%= formatDate(expense.expense_date) %></td><td><%= expense.project_code || 'None' %></td><td><%= expense.category_name %></td><td><%= expense.description %></td><td>NLe <%= money(expense.amount) %></td><td><span class="badge text-bg-<%= statusBadge(expense.status) %>"><%= expense.status %></span></td><td><%= expense.payment_method %></td><td class="text-end"><a class="btn btn-sm btn-outline-success" href="/expenses/<%= expense.id %>">View</a></td>
+    </tr><% }) %>
+  </tbody>
+</table></div></section>

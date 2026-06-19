@@ -18,4 +18,8 @@ const env = {
 
 env.isProduction = env.appEnv === "production";
 
+if (env.isProduction && (!process.env.SESSION_SECRET || env.sessionSecret === "change_me")) {
+  throw new Error("SESSION_SECRET must be set to a strong non-default value in production.");
+}
+
 module.exports = env;

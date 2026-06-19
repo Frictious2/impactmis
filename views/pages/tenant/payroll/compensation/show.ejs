@@ -1,0 +1,149 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 mb-1"><%= staffMember.full_name %></h1>
+    <p class="text-muted mb-0"><%= staffMember.staff_code %> · <%= staffMember.position_title %> · <%= staffMember.department_name || 'No department' %></p>
+  </div>
+  <a class="btn btn-outline-secondary" href="/payroll/compensation">Back to Compensation</a>
+</section>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <section class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Base Compensation</h2>
+        <% if (validationErrors && validationErrors.length) { %>
+          <div class="alert alert-danger">
+            <% validationErrors.forEach((error) => { %><div><%= error.msg %></div><% }) %>
+          </div>
+        <% } %>
+        <form method="post" action="/payroll/compensation/<%= staffMember.id %>" class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="base_salary">Base Salary</label>
+            <input class="form-control" id="base_salary" name="base_salary" type="number" min="0" step="0.01" value="<%= compensationFormData.base_salary %>" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="pay_type">Pay Type</label>
+            <select class="form-select" id="pay_type" name="pay_type">
+              <% payTypeOptions.forEach((option) => { %>
+                <option value="<%= option.value %>" <%= compensationFormData.pay_type === option.value ? 'selected' : '' %>><%= option.label %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="currency">Currency</label>
+            <input class="form-control" id="currency" name="currency" value="<%= compensationFormData.currency %>" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="status">Status</label>
+            <select class="form-select" id="status" name="status">
+              <% statusOptions.forEach((status) => { %>
+                <option value="<%= status %>" <%= compensationFormData.status === status ? 'selected' : '' %>><%= status %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="effective_from">Effective From</label>
+            <input class="form-control" id="effective_from" name="effective_from" type="date" value="<%= compensationFormData.effective_from %>" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="effective_to">Effective To</label>
+            <input class="form-control" id="effective_to" name="effective_to" type="date" value="<%= compensationFormData.effective_to %>">
+          </div>
+          <div class="col-12">
+            <button class="btn btn-success" type="submit">Save Compensation</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-lg-7">
+    <section class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Allowances</h2>
+        <form method="post" action="/payroll/staff/<%= staffMember.id %>/allowances" class="row g-2 mb-3">
+          <div class="col-md-4">
+            <select class="form-select" name="allowance_type_id" required>
+              <option value="">Select allowance</option>
+              <% allowanceTypes.forEach((type) => { %>
+                <option value="<%= type.id %>"><%= type.name %> (<%= type.code %>)</option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-2"><input class="form-control" name="amount" type="number" min="0" step="0.01" placeholder="Amount" required></div>
+          <div class="col-md-3"><input class="form-control" name="effective_from" type="date" value="<%= allowanceFormData.effective_from %>" required></div>
+          <div class="col-md-2">
+            <select class="form-select" name="status">
+              <option value="active">active</option>
+              <option value="inactive">inactive</option>
+            </select>
+          </div>
+          <div class="col-md-1"><button class="btn btn-success w-100" type="submit">Add</button></div>
+        </form>
+        <% if (!allowances.length) { %>
+          <p class="text-muted mb-0">No allowances assigned.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead><tr><th>Name</th><th>Amount</th><th>Effective</th><th>Status</th></tr></thead>
+              <tbody>
+                <% allowances.forEach((item) => { %>
+                  <tr>
+                    <td><%= item.name %> <span class="text-muted">(<%= item.code %>)</span></td>
+                    <td>NLe <%= money(item.amount) %></td>
+                    <td><%= formatDate(item.effective_from) %></td>
+                    <td><span class="badge text-bg-<%= item.status === 'active' ? 'success' : 'secondary' %>"><%= item.status %></span></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </section>
+
+    <section class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Deductions</h2>
+        <form method="post" action="/payroll/staff/<%= staffMember.id %>/deductions" class="row g-2 mb-3">
+          <div class="col-md-4">
+            <select class="form-select" name="deduction_type_id" required>
+              <option value="">Select deduction</option>
+              <% deductionTypes.forEach((type) => { %>
+                <option value="<%= type.id %>"><%= type.name %> (<%= type.code %>)</option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-2"><input class="form-control" name="amount" type="number" min="0" step="0.01" placeholder="Amount" required></div>
+          <div class="col-md-3"><input class="form-control" name="effective_from" type="date" value="<%= deductionFormData.effective_from %>" required></div>
+          <div class="col-md-2">
+            <select class="form-select" name="status">
+              <option value="active">active</option>
+              <option value="inactive">inactive</option>
+            </select>
+          </div>
+          <div class="col-md-1"><button class="btn btn-success w-100" type="submit">Add</button></div>
+        </form>
+        <% if (!deductions.length) { %>
+          <p class="text-muted mb-0">No deductions assigned.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead><tr><th>Name</th><th>Amount</th><th>Effective</th><th>Status</th></tr></thead>
+              <tbody>
+                <% deductions.forEach((item) => { %>
+                  <tr>
+                    <td><%= item.name %> <span class="text-muted">(<%= item.code %>)</span></td>
+                    <td>NLe <%= money(item.amount) %></td>
+                    <td><%= formatDate(item.effective_from) %></td>
+                    <td><span class="badge text-bg-<%= item.status === 'active' ? 'success' : 'secondary' %>"><%= item.status %></span></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  </div>
+</div>

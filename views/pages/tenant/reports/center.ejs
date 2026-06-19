@@ -1,0 +1,28 @@
+<section class="mb-4">
+  <h1 class="h4 mb-1">Reports Center</h1>
+  <p class="text-muted mb-0">Run tenant-scoped operational reports and export CSV files.</p>
+</section>
+
+<div class="row g-4">
+  <% groups.forEach((group) => { %>
+    <div class="col-lg-6 col-xl-4">
+      <section class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h5 mb-3"><%= group.title %></h2>
+          <div class="d-flex flex-column gap-2">
+            <% group.reports.forEach((label) => { %>
+              <% const implementedName = group.implemented.find((name) => label.toLowerCase().replace(/&/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').includes(name.split('-')[0])) || null; %>
+              <% const directMatch = Object.entries(reportRoutes).find(([name]) => label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') === name); %>
+              <% const routeName = directMatch ? directMatch[0] : implementedName; %>
+              <% if (routeName && group.implemented.includes(routeName)) { %>
+                <a class="btn btn-outline-success text-start" href="<%= reportRoutes[routeName] %>"><%= label %></a>
+              <% } else { %>
+                <button class="btn btn-outline-secondary text-start" type="button" disabled><%= label %> <span class="small">(future)</span></button>
+              <% } %>
+            <% }) %>
+          </div>
+        </div>
+      </section>
+    </div>
+  <% }) %>
+</div>

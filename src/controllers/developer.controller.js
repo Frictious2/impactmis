@@ -118,6 +118,7 @@ async function showTenantDetail(req, res, next) {
       ],
       tenant,
       currentLicense: license,
+      moduleCatalog: getModuleCatalog(),
       adminUsers,
       recentAuditLogs
     });
@@ -148,6 +149,9 @@ async function showNewLicense(req, res, next) {
       tenant,
       moduleCatalog: getModuleCatalog(),
       formData: buildLicenseFormData(),
+      formAction: `/developer/tenants/${tenant.id}/licenses`,
+      formTitle: "Issue / Renew License",
+      formDescription: `Create a new license for ${tenant.name}.`,
       validationErrors: []
     });
   } catch (error) {
@@ -179,6 +183,9 @@ async function createLicense(req, res, next) {
         tenant,
         moduleCatalog: getModuleCatalog(),
         formData: buildLicenseFormData(req.body),
+        formAction: `/developer/tenants/${tenant.id}/licenses`,
+        formTitle: "Issue / Renew License",
+        formDescription: `Create a new license for ${tenant.name}.`,
         validationErrors: errors.array()
       });
     }
@@ -191,6 +198,92 @@ async function createLicense(req, res, next) {
     });
 
     req.flash("success", `A new license was issued for ${tenant.name}.`);
+    return res.redirect(`/developer/tenants/${tenant.id}`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showEditLicense(req, res, next) {
+  try {
+    const [tenant, license] = await Promise.all([
+      tenantRepo.findById(req.params.tenantId),
+      licenseRepo.findByIdForTenant(req.params.tenantId, req.params.licenseId)
+    ]);
+
+    if (!tenant || !license) {
+      return res.status(404).render("pages/errors/404", {
+        pageTitle: "License Not Found"
+      });
+    }
+
+    return res.render("layouts/developer-layout", {
+      pageTitle: "Edit License",
+      contentPartial: "../pages/developer/tenants/license-form",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/developer/dashboard" },
+        { label: "Tenants", href: "/developer/tenants" },
+        { label: tenant.name, href: `/developer/tenants/${tenant.id}` },
+        { label: "Edit License" }
+      ],
+      tenant,
+      license,
+      moduleCatalog: getModuleCatalog(),
+      formData: buildLicenseFormData(license),
+      formAction: `/developer/tenants/${tenant.id}/licenses/${license.id}/edit`,
+      formTitle: "Edit Modules / License",
+      formDescription: `Update license details and module access for ${tenant.name}.`,
+      validationErrors: []
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateLicense(req, res, next) {
+  try {
+    const [tenant, license] = await Promise.all([
+      tenantRepo.findById(req.params.tenantId),
+      licenseRepo.findByIdForTenant(req.params.tenantId, req.params.licenseId)
+    ]);
+
+    if (!tenant || !license) {
+      return res.status(404).render("pages/errors/404", {
+        pageTitle: "License Not Found"
+      });
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).render("layouts/developer-layout", {
+        pageTitle: "Edit License",
+        contentPartial: "../pages/developer/tenants/license-form",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/developer/dashboard" },
+          { label: "Tenants", href: "/developer/tenants" },
+          { label: tenant.name, href: `/developer/tenants/${tenant.id}` },
+          { label: "Edit License" }
+        ],
+        tenant,
+        license,
+        moduleCatalog: getModuleCatalog(),
+        formData: buildLicenseFormData(req.body),
+        formAction: `/developer/tenants/${tenant.id}/licenses/${license.id}/edit`,
+        formTitle: "Edit Modules / License",
+        formDescription: `Update license details and module access for ${tenant.name}.`,
+        validationErrors: errors.array()
+      });
+    }
+
+    await tenantOnboardingService.updateLicense({
+      tenantId: tenant.id,
+      licenseId: license.id,
+      actor: req.currentUser,
+      ipAddress: req.ip,
+      payload: req.body
+    });
+
+    req.flash("success", `License modules were updated for ${tenant.name}.`);
     return res.redirect(`/developer/tenants/${tenant.id}`);
   } catch (error) {
     return next(error);
@@ -264,6 +357,8 @@ module.exports = {
   showTenantDetail,
   showNewLicense,
   createLicense,
+  showEditLicense,
+  updateLicense,
   suspendTenant,
   reactivateTenant,
   licenses: placeholder(

@@ -1,0 +1,92 @@
+<section class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1"><%= branch.name %></h1>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="badge rounded-pill badge-soft-secondary"><%= branch.branch_code %></span>
+      <span class="badge rounded-pill <%= branch.status === 'active' ? 'badge-soft-success' : 'badge-soft-secondary' %>"><%= branch.status %></span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/branches/<%= branch.id %>/edit" class="btn btn-primary">Edit</a>
+    <a href="/branches" class="btn btn-outline-secondary">Back to List</a>
+  </div>
+</section>
+
+<div class="row g-4">
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Branch Profile</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Address</dt>
+          <dd class="col-sm-7"><%= branch.address %></dd>
+          <dt class="col-sm-5">City</dt>
+          <dd class="col-sm-7"><%= branch.city || 'Not set' %></dd>
+          <dt class="col-sm-5">District</dt>
+          <dd class="col-sm-7"><%= branch.district || 'Not set' %></dd>
+          <dt class="col-sm-5">Country</dt>
+          <dd class="col-sm-7"><%= branch.country %></dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Geofence</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Latitude</dt>
+          <dd class="col-sm-7"><%= branch.latitude %></dd>
+          <dt class="col-sm-5">Longitude</dt>
+          <dd class="col-sm-7"><%= branch.longitude %></dd>
+          <dt class="col-sm-5">Radius</dt>
+          <dd class="col-sm-7"><%= branch.geofence_radius_meters %> m</dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Contact</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Contact Name</dt>
+          <dd class="col-sm-7"><%= branch.contact_name || 'Not set' %></dd>
+          <dt class="col-sm-5">Contact Phone</dt>
+          <dd class="col-sm-7"><%= branch.contact_phone || 'Not set' %></dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+  <div class="col-xl-6">
+    <section class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Audit-Friendly Timestamps</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Created At</dt>
+          <dd class="col-sm-7"><%= new Date(branch.created_at).toLocaleString() %></dd>
+          <dt class="col-sm-5">Updated At</dt>
+          <dd class="col-sm-7"><%= new Date(branch.updated_at).toLocaleString() %></dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+  <div class="col-12">
+    <section class="card section-card">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Change Status</h2>
+        <form action="/branches/<%= branch.id %>/status" method="POST" class="d-flex flex-column flex-lg-row gap-3 align-items-lg-end">
+          <div>
+            <label for="next_status" class="form-label">Status</label>
+            <select id="next_status" name="next_status" class="form-select">
+              <% statusOptions.forEach((option) => { %>
+                <option value="<%= option.value %>" <%= branch.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+              <% }) %>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-outline-dark">Update Status</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>

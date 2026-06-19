@@ -1,0 +1,143 @@
+<section class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Beneficiaries</h1>
+        <p class="text-muted mb-0">Approved beneficiary summaries aggregated from approved activity reports.</p>
+      </div>
+    </div>
+
+    <form action="/donor/beneficiaries" method="GET" class="row g-3">
+      <div class="col-md-3">
+        <label for="project_id" class="form-label">Project</label>
+        <select id="project_id" name="project_id" class="form-select">
+          <option value="">All projects</option>
+          <% projects.forEach((project) => { %>
+            <option value="<%= project.id %>" <%= String(filters.project_id) === String(project.id) ? 'selected' : '' %>><%= project.project_code %> - <%= project.project_name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="branch_id" class="form-label">Branch</label>
+        <select id="branch_id" name="branch_id" class="form-select">
+          <option value="">All branches</option>
+          <% branches.forEach((branch) => { %>
+            <option value="<%= branch.id %>" <%= String(filters.branch_id) === String(branch.id) ? 'selected' : '' %>><%= branch.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="date_from" class="form-label">Date From</label>
+        <input id="date_from" name="date_from" type="date" class="form-control" value="<%= filters.date_from %>" />
+      </div>
+      <div class="col-md-2">
+        <label for="date_to" class="form-label">Date To</label>
+        <input id="date_to" name="date_to" type="date" class="form-control" value="<%= filters.date_to %>" />
+      </div>
+      <div class="col-md-2 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary">Apply</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="mb-4">
+  <div class="row g-3">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body"><div class="text-muted small">Total Beneficiaries</div><div class="display-6 fw-semibold"><%= summary.totals.totalBeneficiaries %></div></div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body"><div class="text-muted small">Male Beneficiaries</div><div class="display-6 fw-semibold"><%= summary.totals.maleBeneficiaries %></div></div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body"><div class="text-muted small">Female Beneficiaries</div><div class="display-6 fw-semibold"><%= summary.totals.femaleBeneficiaries %></div></div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body"><div class="text-muted small">Youth Beneficiaries</div><div class="display-6 fw-semibold"><%= summary.totals.youthBeneficiaries %></div></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="row g-4">
+  <div class="col-xl-4">
+    <section class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">By Project</h2>
+        <% if (!summary.byProject.length) { %>
+          <p class="text-muted mb-0">No beneficiary data is available yet.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Project</th><th class="text-end">Reached</th></tr>
+              </thead>
+              <tbody>
+                <% summary.byProject.forEach((row) => { %>
+                  <tr>
+                    <td><%= row.project_code %> - <%= row.project_name %></td>
+                    <td class="text-end"><%= row.beneficiaries_reached %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-xl-4">
+    <section class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">By Month</h2>
+        <% if (!summary.byMonth.length) { %>
+          <p class="text-muted mb-0">No monthly beneficiary data is available yet.</p>
+        <% } else { %>
+          <% const maxMonth = Math.max(...summary.byMonth.map((row) => Number(row.beneficiaries_reached || 0)), 1); %>
+          <div class="d-flex flex-column gap-3">
+            <% summary.byMonth.forEach((row) => { %>
+              <% const width = Math.max(6, Math.round((Number(row.beneficiaries_reached || 0) / maxMonth) * 100)); %>
+              <div>
+                <div class="d-flex justify-content-between small mb-1">
+                  <span><%= row.month_label %></span>
+                  <span><%= row.beneficiaries_reached %></span>
+                </div>
+                <div class="progress" role="progressbar" aria-valuenow="<%= row.beneficiaries_reached %>" aria-valuemin="0" aria-valuemax="<%= maxMonth %>">
+                  <div class="progress-bar bg-info" style="width: <%= width %>%"></div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-xl-4">
+    <section class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">By Branch</h2>
+        <% if (!summary.byBranch.length) { %>
+          <p class="text-muted mb-0">No branch summary is available yet.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Branch</th><th class="text-end">Projects</th><th class="text-end">Reached</th></tr>
+              </thead>
+              <tbody>
+                <% summary.byBranch.forEach((row) => { %>
+                  <tr>
+                    <td><%= row.branch_name %></td>
+                    <td class="text-end"><%= row.project_count %></td>
+                    <td class="text-end"><%= row.beneficiaries_reached %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  </div>
+</div>

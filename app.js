@@ -9,11 +9,18 @@ const methodOverride = require("method-override");
 const env = require("./src/config/env");
 const authRoutes = require("./src/routes/auth.routes");
 const developerRoutes = require("./src/routes/developer.routes");
+const donorRoutes = require("./src/routes/donor.routes");
 const tenantRoutes = require("./src/routes/tenant.routes");
 const { attachCurrentUser } = require("./src/middleware/attach-current-user");
 const { attachTenantContext } = require("./src/middleware/attach-tenant-context");
+const { attachNotificationCounts } = require("./src/middleware/attach-notification-counts");
+const { csrfProtection } = require("./src/middleware/csrf-protection");
+const { forcePasswordChange } = require("./src/middleware/force-password-change");
 
 const app = express();
+if (env.isProduction) {
+  app.set("trust proxy", 1);
+}
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -35,12 +42,13 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: "lax",
-      secure: false,
+      secure: env.isProduction,
       maxAge: 1000 * 60 * 60 * 8
     }
   })
 );
 app.use(flash());
+app.use(csrfProtection);
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use((req, res, next) => {
@@ -54,9 +62,12 @@ app.use((req, res, next) => {
 
 app.use(attachCurrentUser);
 app.use(attachTenantContext);
+app.use(attachNotificationCounts);
+app.use(forcePasswordChange);
 
 app.use("/", authRoutes);
 app.use("/developer", developerRoutes);
+app.use("/donor", donorRoutes);
 app.use("/", tenantRoutes);
 
 app.use((req, res) => {

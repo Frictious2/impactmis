@@ -1,0 +1,9 @@
+<%- include('form', {
+  formTitle: `Edit ${branch.name}`,
+  formAction: `/branches/${branch.id}/edit`,
+  submitLabel: 'Save Changes',
+  cancelHref: `/branches/${branch.id}`,
+  formData,
+  statusOptions,
+  validationErrors
+}) %>

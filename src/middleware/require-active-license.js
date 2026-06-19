@@ -1,4 +1,5 @@
 const licenseRepo = require("../repos/license.repo");
+const { parseJsonField } = require("../utils/tenant-form");
 
 async function requireActiveLicense(req, res, next) {
   try {
@@ -13,6 +14,9 @@ async function requireActiveLicense(req, res, next) {
     }
 
     const license = await licenseRepo.findActiveByTenantId(req.currentUser.tenant_id);
+    if (license) {
+      license.modules_json = parseJsonField(license.modules_json, {});
+    }
     req.activeLicense = license || null;
     res.locals.activeLicense = license || null;
 

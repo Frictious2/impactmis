@@ -3,9 +3,14 @@ const organizationProfileRepo = require("./organization-profile.repo");
 const departmentRepo = require("./department.repo");
 const userRepo = require("./user.repo");
 const approvalWorkflowRepo = require("./approval-workflow.repo");
-const auditLogRepo = require("./audit-log.repo");
 const staffRepo = require("./staff.repo");
 const attendanceRepo = require("./attendance.repo");
+const branchRepo = require("./branch.repo");
+const projectRepo = require("./project.repo");
+const activityReportRepo = require("./activity-report.repo");
+const payrollRepo = require("./payroll.repo");
+const financeRepo = require("./finance.repo");
+const budgetRepo = require("./budget.repo");
 
 async function findById(id, db = pool) {
   const [rows] = await db.query("SELECT * FROM tenants WHERE id = ? LIMIT 1", [id]);
@@ -192,6 +197,10 @@ async function findDeveloperTenantDetailById(id) {
 }
 
 async function getTenantDashboardStats(tenantId) {
+  const auditLogCountPromise = pool
+    .query("SELECT COUNT(*) AS total FROM audit_logs WHERE tenant_id = ?", [tenantId])
+    .then(([[row]]) => Number(row.total || 0));
+
   const [
     organizationProfile,
     departmentCount,
@@ -201,18 +210,52 @@ async function getTenantDashboardStats(tenantId) {
     activeStaffCount,
     activeVolunteerCount,
     todayAttendanceCount,
-    pendingAttendanceApprovalsCount
+    pendingAttendanceApprovalsCount,
+    totalBranches,
+    todaySelfCheckins,
+    outsideGeofenceAttempts,
+    activeProjectCount,
+    completedProjectCount,
+    assignedProjectStaffCount,
+    overdueTaskCount,
+    submittedReportCount,
+    pendingReportApprovalsCount,
+    approvedReportsThisMonthCount,
+    beneficiariesReachedThisMonth,
+    pendingPayrollApprovalCount,
+    currentMonthPayroll,
+    expensesThisMonthCount,
+    pendingExpenseApprovalsCount,
+    approvedExpensesThisMonth,
+    projectBudgetUtilization
   ] =
     await Promise.all([
       organizationProfileRepo.findByTenantId(tenantId),
       departmentRepo.countByTenantId(tenantId),
       userRepo.countActiveByTenantId(tenantId),
       approvalWorkflowRepo.findByTenantId(tenantId),
-      auditLogRepo.countByTenantId(tenantId),
+      auditLogCountPromise,
       staffRepo.countActiveByTenantId(tenantId),
       staffRepo.countActiveVolunteersByTenantId(tenantId),
       attendanceRepo.countTodayByTenantId(tenantId),
-      attendanceRepo.countPendingApprovalsByTenantId(tenantId)
+      attendanceRepo.countPendingApprovalsByTenantId(tenantId),
+      branchRepo.countByTenantId(tenantId),
+      attendanceRepo.countTodaySelfCheckinsByTenantId(tenantId),
+      attendanceRepo.countOutsideGeofenceAttemptsByTenantId(tenantId),
+      projectRepo.countActiveByTenantId(tenantId),
+      projectRepo.countCompletedByTenantId(tenantId),
+      projectRepo.countAssignedStaffByTenantId(tenantId),
+      projectRepo.countOverdueTasksByTenantId(tenantId),
+      activityReportRepo.countSubmittedByTenantId(tenantId),
+      activityReportRepo.countPendingApprovalsByTenantId(tenantId),
+      activityReportRepo.countApprovedThisMonthByTenantId(tenantId),
+      activityReportRepo.sumBeneficiariesThisMonthByTenantId(tenantId),
+      payrollRepo.countPendingApprovalByTenantId(tenantId),
+      payrollRepo.getCurrentMonthPayrollByTenantId(tenantId),
+      financeRepo.countExpensesThisMonth(tenantId),
+      financeRepo.countPendingExpenseApprovals(tenantId),
+      financeRepo.countApprovedExpensesThisMonth(tenantId),
+      budgetRepo.getTenantBudgetUtilization(tenantId)
     ]);
 
   return {
@@ -223,6 +266,24 @@ async function getTenantDashboardStats(tenantId) {
     activeVolunteerCount,
     todayAttendanceCount,
     pendingAttendanceApprovalsCount,
+    totalBranches,
+    todaySelfCheckins,
+    outsideGeofenceAttempts,
+    activeProjectCount,
+    completedProjectCount,
+    assignedProjectStaffCount,
+    overdueTaskCount,
+    submittedReportCount,
+    pendingReportApprovalsCount,
+    approvedReportsThisMonthCount,
+    beneficiariesReachedThisMonth,
+    currentMonthPayrollStatus: currentMonthPayroll ? currentMonthPayroll.status : "not_generated",
+    currentMonthPayrollNet: currentMonthPayroll ? Number(currentMonthPayroll.total_net || 0) : 0,
+    pendingPayrollApprovalCount,
+    expensesThisMonthCount,
+    pendingExpenseApprovalsCount,
+    approvedExpensesThisMonth,
+    projectBudgetUtilization,
     workflowCount: approvalWorkflow
       ? [
           approvalWorkflow.attendance_approvals,

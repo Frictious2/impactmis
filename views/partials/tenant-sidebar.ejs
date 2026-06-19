@@ -1,3 +1,17 @@
+<%
+  const parseSidebarModules = (value) => {
+    if (!value) return null;
+    if (Array.isArray(value) || typeof value === 'object') return value;
+    try { return JSON.parse(value); } catch (_) { return null; }
+  };
+  const sidebarModules = parseSidebarModules(activeLicense && activeLicense.modules_json);
+  const hasSidebarModule = (code) => {
+    if (!sidebarModules) return false;
+    if (Array.isArray(sidebarModules)) return sidebarModules.includes(code);
+    if (!Object.prototype.hasOwnProperty.call(sidebarModules, code)) return false;
+    return ![false, 'false', 0, '0', 'disabled', 'off'].includes(sidebarModules[code]);
+  };
+%>
 <div class="p-3">
   <div class="mb-4">
     <div class="text-uppercase small text-success">ImpactMIS</div>
@@ -6,12 +20,30 @@
 
   <nav class="nav flex-column gap-1">
     <a class="nav-link sidebar-link text-dark <%= currentPath === '/dashboard' ? 'active' : '' %>" href="/dashboard">Dashboard</a>
-    <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/staff') ? 'active' : '' %>" href="/staff">Staff &amp; Volunteers</a>
-    <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/attendance') ? 'active' : '' %>" href="/attendance">Attendance</a>
-    <a class="nav-link sidebar-link text-dark <%= currentPath === '/projects' ? 'active' : '' %>" href="/projects">Projects</a>
-    <a class="nav-link sidebar-link text-dark <%= currentPath === '/payroll' ? 'active' : '' %>" href="/payroll">Payroll</a>
-    <a class="nav-link sidebar-link text-dark <%= currentPath === '/reports' ? 'active' : '' %>" href="/reports">Reports</a>
-    <a class="nav-link sidebar-link text-dark <%= currentPath === '/approvals' ? 'active' : '' %>" href="/approvals">Approvals</a>
+    <% if (hasSidebarModule('branches')) { %>
+      <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/branches') ? 'active' : '' %>" href="/branches">Branches</a>
+    <% } %>
+    <% if (hasSidebarModule('staff')) { %>
+      <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/staff') ? 'active' : '' %>" href="/staff">Staff &amp; Volunteers</a>
+    <% } %>
+    <% if (hasSidebarModule('attendance')) { %>
+      <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/attendance') ? 'active' : '' %>" href="/attendance">Attendance</a>
+    <% } %>
+    <% if (hasSidebarModule('projects')) { %>
+      <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/projects') ? 'active' : '' %>" href="/projects">Projects</a>
+    <% } %>
+    <% if (hasSidebarModule('payroll')) { %>
+      <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/payroll') ? 'active' : '' %>" href="/payroll/runs">Payroll</a>
+    <% } %>
+    <% if (hasSidebarModule('finance')) { %>
+      <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/expenses') || currentPath.startsWith('/finance') ? 'active' : '' %>" href="/expenses">Finance &amp; Expenses</a>
+    <% } %>
+    <% if (hasSidebarModule('reports')) { %>
+      <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/reports') ? 'active' : '' %>" href="/reports/center">Reports Center</a>
+    <% } %>
+    <% if (hasSidebarModule('approvals')) { %>
+      <a class="nav-link sidebar-link text-dark <%= currentPath === '/approvals' ? 'active' : '' %>" href="/approvals">Approvals</a>
+    <% } %>
     <a class="nav-link sidebar-link text-dark <%= currentPath === '/audit-logs' ? 'active' : '' %>" href="/audit-logs">Audit Logs</a>
     <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/settings') ? 'active' : '' %>" href="/settings">Settings</a>
   </nav>

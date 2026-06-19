@@ -1,0 +1,147 @@
+<section class="mb-4">
+  <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="h3 mb-1">Donor Dashboard</h1>
+      <p class="text-muted mb-0">Read-only visibility into approved project delivery and beneficiary outcomes.</p>
+    </div>
+  </div>
+
+  <% if (organizationProfile) { %>
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <h2 class="h5 mb-2"><%= organizationProfile.organization_name %></h2>
+            <p class="text-muted mb-0"><%= organizationProfile.mission_statement || 'Organization profile available for this tenant.' %></p>
+          </div>
+          <div class="col-lg-6">
+            <dl class="row mb-0">
+              <dt class="col-sm-4">Type</dt>
+              <dd class="col-sm-8"><%= organizationProfile.organization_type || 'Not set' %></dd>
+              <dt class="col-sm-4">Country</dt>
+              <dd class="col-sm-8"><%= organizationProfile.country || 'Sierra Leone' %></dd>
+              <dt class="col-sm-4">Website</dt>
+              <dd class="col-sm-8"><%= organizationProfile.website || 'Not set' %></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Active Projects</div>
+          <div class="display-6 fw-semibold"><%= stats.activeProjectCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Approved Reports</div>
+          <div class="display-6 fw-semibold"><%= stats.approvedReportCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Beneficiaries This Month</div>
+          <div class="display-6 fw-semibold"><%= stats.beneficiariesReachedThisMonth %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Indicators On Track</div>
+          <div class="display-6 fw-semibold"><%= stats.indicatorsOnTrack %></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-4">
+      <section class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Reports by Project</h2>
+          <% if (!stats.reportsByProject.length) { %>
+            <p class="text-muted mb-0">No approved reports are available yet.</p>
+          <% } else { %>
+            <div class="d-flex flex-column gap-3">
+              <% stats.reportsByProject.forEach((row) => { %>
+                <div>
+                  <div class="d-flex justify-content-between gap-3">
+                    <div>
+                      <div class="fw-semibold"><%= row.project_code %></div>
+                      <div class="small text-muted"><%= row.project_name %></div>
+                    </div>
+                    <div class="text-end fw-semibold"><%= row.approved_report_count %></div>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-xl-4">
+      <section class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Beneficiaries by Month</h2>
+          <% if (!stats.beneficiariesByMonth.length) { %>
+            <p class="text-muted mb-0">No approved beneficiary data is available yet.</p>
+          <% } else { %>
+            <% const maxMonth = Math.max(...stats.beneficiariesByMonth.map((row) => Number(row.beneficiaries_reached || 0)), 1); %>
+            <div class="d-flex flex-column gap-3">
+              <% stats.beneficiariesByMonth.forEach((row) => { %>
+                <% const width = Math.max(6, Math.round((Number(row.beneficiaries_reached || 0) / maxMonth) * 100)); %>
+                <div>
+                  <div class="d-flex justify-content-between small mb-1">
+                    <span><%= row.month_label %></span>
+                    <span><%= row.beneficiaries_reached %></span>
+                  </div>
+                  <div class="progress" role="progressbar" aria-valuenow="<%= row.beneficiaries_reached %>" aria-valuemin="0" aria-valuemax="<%= maxMonth %>">
+                    <div class="progress-bar bg-info" style="width: <%= width %>%"></div>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-xl-4">
+      <section class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Indicator Progress Summary</h2>
+          <% if (!stats.indicatorSummary.length) { %>
+            <p class="text-muted mb-0">No indicators are available yet.</p>
+          <% } else { %>
+            <div class="d-flex flex-column gap-3">
+              <% stats.indicatorSummary.forEach((row) => { %>
+                <% const denominator = Number(row.indicator_count || 0); %>
+                <% const width = denominator > 0 ? Math.round((Number(row.indicators_on_track || 0) / denominator) * 100) : 0; %>
+                <div>
+                  <div class="d-flex justify-content-between gap-3 small mb-1">
+                    <span><%= row.project_code %> - <%= row.project_name %></span>
+                    <span><%= row.indicators_on_track %>/<%= row.indicator_count %></span>
+                  </div>
+                  <div class="progress" role="progressbar" aria-valuenow="<%= width %>" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar bg-success" style="width: <%= width %>%"></div>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>

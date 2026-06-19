@@ -1,0 +1,71 @@
+<section class="card border-0 shadow-sm">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Projects</h1>
+        <p class="text-muted mb-0">Active and completed projects available to donor users.</p>
+      </div>
+    </div>
+
+    <form action="/donor/projects" method="GET" class="row g-3 mb-4">
+      <div class="col-md-4">
+        <label for="status" class="form-label">Status</label>
+        <select id="status" name="status" class="form-select">
+          <option value="">All visible statuses</option>
+          <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
+          <option value="completed" <%= filters.status === 'completed' ? 'selected' : '' %>>Completed</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="branch_id" class="form-label">Branch</label>
+        <select id="branch_id" name="branch_id" class="form-select">
+          <option value="">All branches</option>
+          <% branches.forEach((branch) => { %>
+            <option value="<%= branch.id %>" <%= String(filters.branch_id) === String(branch.id) ? 'selected' : '' %>><%= branch.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-4 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+        <a href="/donor/projects" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+
+    <% if (!projects.length) { %>
+      <p class="text-muted mb-0">No donor-visible projects are available yet.</p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Project Code</th>
+              <th>Project Name</th>
+              <th>Branch</th>
+              <th>Donor</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Status</th>
+              <th>Completion</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% projects.forEach((project) => { %>
+              <tr>
+                <td class="fw-semibold"><%= project.project_code %></td>
+                <td><%= project.project_name %></td>
+                <td><%= project.branch_name || 'Unassigned' %></td>
+                <td><%= project.donor_name || 'Not specified' %></td>
+                <td><%= new Date(project.start_date).toLocaleDateString() %></td>
+                <td><%= project.end_date ? new Date(project.end_date).toLocaleDateString() : 'Open-ended' %></td>
+                <td><span class="badge rounded-pill <%= project.status === 'active' ? 'badge-soft-success' : 'badge-soft-primary' %>"><%= project.status %></span></td>
+                <td><%= project.completion_percentage %>%</td>
+                <td class="text-end"><a href="/donor/projects/<%= project.id %>" class="btn btn-sm btn-outline-primary">View</a></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</section>

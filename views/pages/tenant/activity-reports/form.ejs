@@ -1,0 +1,148 @@
+<% const validationMap = {}; %>
+<% (validationErrors || []).forEach((error) => { validationMap[error.path] = error.msg; }); %>
+
+<form action="<%= formAction %>" method="POST" class="d-flex flex-column gap-4">
+  <section class="card section-card">
+    <div class="card-body">
+      <h1 class="h4 mb-3"><%= formTitle %></h1>
+      <div class="row g-3">
+        <div class="col-12">
+          <h2 class="h6 text-uppercase text-muted">Report Information</h2>
+        </div>
+        <div class="col-md-4">
+          <label for="report_code" class="form-label">Report Code</label>
+          <input id="report_code" name="report_code" type="text" class="form-control" value="<%= formData.report_code %>" />
+          <div class="form-text">Leave blank to auto-generate.</div>
+        </div>
+        <div class="col-md-4">
+          <label for="project_id" class="form-label">Project</label>
+          <select id="project_id" name="project_id" class="form-select <%= validationMap.project_id ? 'is-invalid' : '' %>">
+            <option value="">Select project</option>
+            <% projects.forEach((project) => { %>
+              <option value="<%= project.id %>" <%= String(formData.project_id) === String(project.id) ? 'selected' : '' %>><%= project.project_code %> - <%= project.project_name %></option>
+            <% }) %>
+          </select>
+          <% if (validationMap.project_id) { %><div class="invalid-feedback"><%= validationMap.project_id %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="task_id" class="form-label">Task</label>
+          <select id="task_id" name="task_id" class="form-select <%= validationMap.task_id ? 'is-invalid' : '' %>">
+            <option value="">Optional task</option>
+            <% tasks.forEach((task) => { %>
+              <option value="<%= task.id %>" <%= String(formData.task_id) === String(task.id) ? 'selected' : '' %>><%= task.title %></option>
+            <% }) %>
+          </select>
+          <% if (validationMap.task_id) { %><div class="invalid-feedback"><%= validationMap.task_id %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="staff_member_id" class="form-label">Staff Member</label>
+          <select id="staff_member_id" name="staff_member_id" class="form-select <%= validationMap.staff_member_id ? 'is-invalid' : '' %>">
+            <option value="">Optional staff member</option>
+            <% staffMembers.forEach((staffMember) => { %>
+              <option value="<%= staffMember.id %>" <%= String(formData.staff_member_id) === String(staffMember.id) ? 'selected' : '' %>><%= staffMember.staff_code %> - <%= staffMember.full_name %></option>
+            <% }) %>
+          </select>
+          <% if (validationMap.staff_member_id) { %><div class="invalid-feedback"><%= validationMap.staff_member_id %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="branch_id" class="form-label">Branch</label>
+          <select id="branch_id" name="branch_id" class="form-select <%= validationMap.branch_id ? 'is-invalid' : '' %>">
+            <option value="">Optional branch</option>
+            <% branches.forEach((branch) => { %>
+              <option value="<%= branch.id %>" <%= String(formData.branch_id) === String(branch.id) ? 'selected' : '' %>><%= branch.name %></option>
+            <% }) %>
+          </select>
+          <% if (validationMap.branch_id) { %><div class="invalid-feedback"><%= validationMap.branch_id %></div><% } %>
+        </div>
+        <div class="col-md-2">
+          <label for="report_date" class="form-label">Report Date</label>
+          <input id="report_date" name="report_date" type="date" class="form-control <%= validationMap.report_date ? 'is-invalid' : '' %>" value="<%= formData.report_date %>" />
+          <% if (validationMap.report_date) { %><div class="invalid-feedback"><%= validationMap.report_date %></div><% } %>
+        </div>
+        <div class="col-md-2">
+          <label for="report_type" class="form-label">Type</label>
+          <select id="report_type" name="report_type" class="form-select <%= validationMap.report_type ? 'is-invalid' : '' %>">
+            <% reportTypeOptions.forEach((option) => { %>
+              <option value="<%= option.value %>" <%= formData.report_type === option.value ? 'selected' : '' %>><%= option.label %></option>
+            <% }) %>
+          </select>
+          <% if (validationMap.report_type) { %><div class="invalid-feedback"><%= validationMap.report_type %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="title" class="form-label">Title</label>
+          <input id="title" name="title" type="text" class="form-control <%= validationMap.title ? 'is-invalid' : '' %>" value="<%= formData.title %>" />
+          <% if (validationMap.title) { %><div class="invalid-feedback"><%= validationMap.title %></div><% } %>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12">
+          <h2 class="h6 text-uppercase text-muted">Beneficiary Reach</h2>
+        </div>
+        <div class="col-md-3">
+          <label for="beneficiaries_reached" class="form-label">Total Reached</label>
+          <input id="beneficiaries_reached" name="beneficiaries_reached" type="number" min="0" class="form-control <%= validationMap.beneficiaries_reached ? 'is-invalid' : '' %>" value="<%= formData.beneficiaries_reached %>" />
+          <% if (validationMap.beneficiaries_reached) { %><div class="invalid-feedback"><%= validationMap.beneficiaries_reached %></div><% } %>
+        </div>
+        <div class="col-md-3">
+          <label for="male_beneficiaries" class="form-label">Male</label>
+          <input id="male_beneficiaries" name="male_beneficiaries" type="number" min="0" class="form-control <%= validationMap.male_beneficiaries ? 'is-invalid' : '' %>" value="<%= formData.male_beneficiaries %>" />
+          <% if (validationMap.male_beneficiaries) { %><div class="invalid-feedback"><%= validationMap.male_beneficiaries %></div><% } %>
+        </div>
+        <div class="col-md-3">
+          <label for="female_beneficiaries" class="form-label">Female</label>
+          <input id="female_beneficiaries" name="female_beneficiaries" type="number" min="0" class="form-control <%= validationMap.female_beneficiaries ? 'is-invalid' : '' %>" value="<%= formData.female_beneficiaries %>" />
+          <% if (validationMap.female_beneficiaries) { %><div class="invalid-feedback"><%= validationMap.female_beneficiaries %></div><% } %>
+        </div>
+        <div class="col-md-3">
+          <label for="youth_beneficiaries" class="form-label">Youth</label>
+          <input id="youth_beneficiaries" name="youth_beneficiaries" type="number" min="0" class="form-control <%= validationMap.youth_beneficiaries ? 'is-invalid' : '' %>" value="<%= formData.youth_beneficiaries %>" />
+          <% if (validationMap.youth_beneficiaries) { %><div class="invalid-feedback"><%= validationMap.youth_beneficiaries %></div><% } %>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12">
+          <h2 class="h6 text-uppercase text-muted">Activity Summary</h2>
+        </div>
+        <div class="col-12">
+          <label for="summary" class="form-label">Summary</label>
+          <textarea id="summary" name="summary" class="form-control <%= validationMap.summary ? 'is-invalid' : '' %>" rows="4"><%= formData.summary %></textarea>
+          <% if (validationMap.summary) { %><div class="invalid-feedback"><%= validationMap.summary %></div><% } %>
+        </div>
+        <div class="col-12">
+          <label for="activities_completed" class="form-label">Activities Completed</label>
+          <textarea id="activities_completed" name="activities_completed" class="form-control" rows="4"><%= formData.activities_completed %></textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card section-card">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="challenges" class="form-label">Challenges</label>
+          <textarea id="challenges" name="challenges" class="form-control" rows="4"><%= formData.challenges %></textarea>
+        </div>
+        <div class="col-md-6">
+          <label for="recommendations" class="form-label">Recommendations</label>
+          <textarea id="recommendations" name="recommendations" class="form-control" rows="4"><%= formData.recommendations %></textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary"><%= submitLabel %></button>
+    <a href="<%= cancelHref %>" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>

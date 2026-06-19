@@ -42,6 +42,21 @@ async function findCurrentOrLatestByTenantId(tenantId, db = pool) {
   return findLatestByTenantId(tenantId, db);
 }
 
+async function findByIdForTenant(tenantId, licenseId, db = pool) {
+  const [rows] = await db.query(
+    `
+      SELECT *
+      FROM licenses
+      WHERE tenant_id = ?
+        AND id = ?
+      LIMIT 1
+    `,
+    [tenantId, licenseId]
+  );
+
+  return rows[0] || null;
+}
+
 async function create(payload, db = pool) {
   const [result] = await db.query(
     `
@@ -89,10 +104,44 @@ async function reclassifyPreviousActiveLicenses(tenantId, startsAt, db = pool) {
   );
 }
 
+async function updateForTenant(tenantId, licenseId, payload, db = pool) {
+  await db.query(
+    `
+      UPDATE licenses
+      SET
+        plan_name = ?,
+        duration_months = ?,
+        starts_at = ?,
+        expires_at = ?,
+        status = ?,
+        modules_json = ?,
+        seat_limit = ?,
+        updated_at = NOW()
+      WHERE tenant_id = ?
+        AND id = ?
+    `,
+    [
+      payload.plan_name,
+      payload.duration_months,
+      payload.starts_at,
+      payload.expires_at,
+      payload.status,
+      JSON.stringify(payload.modules_json),
+      payload.seat_limit,
+      tenantId,
+      licenseId
+    ]
+  );
+
+  return findByIdForTenant(tenantId, licenseId, db);
+}
+
 module.exports = {
   findActiveByTenantId,
   findLatestByTenantId,
   findCurrentOrLatestByTenantId,
+  findByIdForTenant,
   create,
-  reclassifyPreviousActiveLicenses
+  reclassifyPreviousActiveLicenses,
+  updateForTenant
 };

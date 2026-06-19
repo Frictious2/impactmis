@@ -1,0 +1,50 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 mb-1"><%= project.project_name %> Budget</h1>
+    <p class="text-muted mb-0"><%= project.project_code %> · Track category budgets against approved and paid expenses.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="/projects/<%= project.id %>">Back to Project</a>
+</section>
+
+<section class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Total Budget</div><div class="h4">NLe <%= money(summary.total_budget) %></div></div></div></div>
+  <div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Spent</div><div class="h4">NLe <%= money(summary.total_spent) %></div></div></div></div>
+  <div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Remaining</div><div class="h4">NLe <%= money(summary.remaining) %></div></div></div></div>
+</section>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <section class="card border-0 shadow-sm"><div class="card-body">
+      <h2 class="h5">Add / Update Budget</h2>
+      <form method="post" action="/projects/<%= project.id %>/budgets" class="row g-3">
+        <div class="col-12"><label class="form-label">Category</label><select class="form-select" name="category_id" required><option value="">Select category</option><% categories.forEach((category) => { %><option value="<%= category.id %>"><%= category.name %> (<%= category.code %>)</option><% }) %></select></div>
+        <div class="col-12"><label class="form-label">Budget Amount</label><input class="form-control" name="budget_amount" type="number" min="0.01" step="0.01" required></div>
+        <div class="col-12"><label class="form-label">Notes</label><textarea class="form-control" name="notes" rows="3"></textarea></div>
+        <div class="col-12"><select class="form-select" name="status"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+        <div class="col-12"><button class="btn btn-success" type="submit">Save Budget</button></div>
+      </form>
+    </div></section>
+  </div>
+  <div class="col-lg-8">
+    <section class="card border-0 shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light"><tr><th>Category</th><th>Budget</th><th>Spent</th><th>Remaining</th><th>Utilization</th><th>Status</th></tr></thead>
+          <tbody>
+            <% if (!budgets.length) { %><tr><td colspan="6" class="text-center text-muted py-5">No budgets configured yet.</td></tr><% } %>
+            <% budgets.forEach((budget) => { const remaining = Number(budget.budget_amount || 0) - Number(budget.spent_amount || 0); const pct = Number(budget.budget_amount) > 0 ? Math.min(100, Math.round((Number(budget.spent_amount) / Number(budget.budget_amount)) * 100)) : 0; %>
+              <tr>
+                <td><%= budget.category_name %> <span class="text-muted">(<%= budget.category_code %>)</span></td>
+                <td>NLe <%= money(budget.budget_amount) %></td>
+                <td>NLe <%= money(budget.spent_amount) %></td>
+                <td>NLe <%= money(remaining) %></td>
+                <td><div class="progress"><div class="progress-bar" style="width:<%= pct %>%"><%= pct %>%</div></div></td>
+                <td><span class="badge text-bg-<%= budget.status === 'active' ? 'success' : 'secondary' %>"><%= budget.status %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>

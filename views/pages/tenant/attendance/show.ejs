@@ -27,6 +27,8 @@
           <dd class="col-sm-7"><%= record.position_title %></dd>
           <dt class="col-sm-5">Type</dt>
           <dd class="col-sm-7 text-capitalize"><%= record.employment_type %></dd>
+          <dt class="col-sm-5">Branch</dt>
+          <dd class="col-sm-7"><%= record.branch_name || 'Unassigned' %></dd>
         </dl>
       </div>
     </section>
@@ -40,12 +42,14 @@
           <dd class="col-sm-7"><%= new Date(record.attendance_date).toLocaleDateString() %></dd>
           <dt class="col-sm-5">Status</dt>
           <dd class="col-sm-7"><%= record.status %></dd>
+          <dt class="col-sm-5">Capture Method</dt>
+          <dd class="col-sm-7 text-capitalize"><%= String(record.capture_method || 'manual_entry').replaceAll('_', ' ') %></dd>
           <dt class="col-sm-5">Check In</dt>
-          <dd class="col-sm-7"><%= record.check_in_time ? String(record.check_in_time).slice(0, 5) : '—' %></dd>
+          <dd class="col-sm-7"><%= record.check_in_time ? String(record.check_in_time).slice(0, 5) : '-' %></dd>
           <dt class="col-sm-5">Check Out</dt>
-          <dd class="col-sm-7"><%= record.check_out_time ? String(record.check_out_time).slice(0, 5) : '—' %></dd>
+          <dd class="col-sm-7"><%= record.check_out_time ? String(record.check_out_time).slice(0, 5) : '-' %></dd>
           <dt class="col-sm-5">Hours Worked</dt>
-          <dd class="col-sm-7"><%= record.hours_worked || '—' %></dd>
+          <dd class="col-sm-7"><%= record.hours_worked || '-' %></dd>
         </dl>
       </div>
     </section>
@@ -62,7 +66,7 @@
           <dt class="col-sm-5">Approved By</dt>
           <dd class="col-sm-7"><%= record.approved_by_name || 'Not yet approved' %></dd>
           <dt class="col-sm-5">Rejection Reason</dt>
-          <dd class="col-sm-7"><%= record.rejection_reason || '—' %></dd>
+          <dd class="col-sm-7"><%= record.rejection_reason || '-' %></dd>
         </dl>
       </div>
     </section>
@@ -70,16 +74,28 @@
   <div class="col-xl-6">
     <section class="card section-card h-100">
       <div class="card-body">
-        <h2 class="h5 mb-3">Audit-Friendly Timestamps</h2>
+        <h2 class="h5 mb-3">Location and Audit</h2>
         <dl class="row mb-0">
+          <dt class="col-sm-5">Location</dt>
+          <dd class="col-sm-7"><%= record.location || '-' %></dd>
+          <dt class="col-sm-5">GPS Coordinates</dt>
+          <dd class="col-sm-7"><%= record.latitude && record.longitude ? `${record.latitude}, ${record.longitude}` : '-' %></dd>
+          <dt class="col-sm-5">Distance from Branch</dt>
+          <dd class="col-sm-7"><%= record.distance_from_branch_meters ? `${record.distance_from_branch_meters} m` : '-' %></dd>
+          <dt class="col-sm-5">Geofence Status</dt>
+          <dd class="col-sm-7">
+            <span class="badge rounded-pill <%= record.geofence_status === 'inside' ? 'badge-soft-success' : record.geofence_status === 'outside' ? 'badge-soft-danger' : 'badge-soft-secondary' %>">
+              <%= record.geofence_status || 'not_checked' %>
+            </span>
+          </dd>
+          <dt class="col-sm-5">Device Info</dt>
+          <dd class="col-sm-7"><%= record.device_info || '-' %></dd>
+          <dt class="col-sm-5">Notes</dt>
+          <dd class="col-sm-7"><%= record.notes || '-' %></dd>
           <dt class="col-sm-5">Created At</dt>
           <dd class="col-sm-7"><%= new Date(record.created_at).toLocaleString() %></dd>
           <dt class="col-sm-5">Updated At</dt>
           <dd class="col-sm-7"><%= new Date(record.updated_at).toLocaleString() %></dd>
-          <dt class="col-sm-5">Location</dt>
-          <dd class="col-sm-7"><%= record.location || '—' %></dd>
-          <dt class="col-sm-5">Notes</dt>
-          <dd class="col-sm-7"><%= record.notes || '—' %></dd>
         </dl>
       </div>
     </section>

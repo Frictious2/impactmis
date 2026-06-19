@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("../partials/head", { pageTitle }) %>
+    <style>
+      body {
+        background: #f8f9fa;
+      }
+
+      .print-shell {
+        max-width: 900px;
+        margin: 2rem auto;
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        .no-print {
+          display: none !important;
+        }
+
+        .print-shell {
+          margin: 0;
+          max-width: none;
+        }
+
+        .card {
+          border: 0 !important;
+          box-shadow: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="print-shell">
+      <%- include(contentPartial) %>
+    </main>
+  </body>
+</html>

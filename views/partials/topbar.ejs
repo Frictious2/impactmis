@@ -12,9 +12,32 @@
     </div>
 
     <% if (currentUser) { %>
-      <form action="/logout" method="POST" class="m-0">
-        <button type="submit" class="btn btn-outline-secondary btn-sm">Log Out</button>
-      </form>
+      <div class="d-flex align-items-center gap-2">
+        <div class="dropdown">
+          <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" type="button">
+            Notifications <span class="badge text-bg-danger"><%= unreadNotificationsCount || 0 %></span>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end p-2" style="min-width: 320px;">
+            <% if (!latestNotifications || !latestNotifications.length) { %>
+              <div class="dropdown-item text-muted">No notifications</div>
+            <% } %>
+            <% (latestNotifications || []).forEach((notification) => { %>
+              <a class="dropdown-item <%= notification.is_read ? '' : 'fw-semibold' %>" href="<%= notification.link_url || '/notifications' %>">
+                <div><%= notification.title %></div>
+                <div class="small text-muted"><%= notification.category %></div>
+              </a>
+            <% }) %>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item text-success" href="/notifications">View all notifications</a>
+          </div>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm" href="/messages">
+          Messages <span class="badge text-bg-danger"><%= unreadMessagesCount || 0 %></span>
+        </a>
+        <form action="/logout" method="POST" class="m-0">
+          <button type="submit" class="btn btn-outline-secondary btn-sm">Log Out</button>
+        </form>
+      </div>
     <% } %>
   </div>
 </header>

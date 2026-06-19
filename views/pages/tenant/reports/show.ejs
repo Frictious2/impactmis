@@ -1,0 +1,48 @@
+<section class="d-flex justify-content-between align-items-start gap-3 mb-4">
+  <div>
+    <h1 class="h4 mb-1"><%= report.title %></h1>
+    <p class="text-muted mb-0"><%= rows.length %> row(s) returned. All data is scoped to the current tenant.</p>
+  </div>
+  <a class="btn btn-success" href="<%= exportHref %>">Export CSV</a>
+</section>
+
+<section class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <form class="row g-2">
+      <div class="col-md-2"><label class="form-label small">Date From</label><input class="form-control" name="date_from" type="date" value="<%= filters.date_from %>"></div>
+      <div class="col-md-2"><label class="form-label small">Date To</label><input class="form-control" name="date_to" type="date" value="<%= filters.date_to %>"></div>
+      <div class="col-md-2"><label class="form-label small">Department</label><select class="form-select" name="department_id"><option value="">All</option><% filterOptions.departments.forEach((department) => { %><option value="<%= department.id %>" <%= String(filters.department_id) === String(department.id) ? 'selected' : '' %>><%= department.department_name %></option><% }) %></select></div>
+      <div class="col-md-2"><label class="form-label small">Branch</label><select class="form-select" name="branch_id"><option value="">All</option><% filterOptions.branches.forEach((branch) => { %><option value="<%= branch.id %>" <%= String(filters.branch_id) === String(branch.id) ? 'selected' : '' %>><%= branch.name %></option><% }) %></select></div>
+      <div class="col-md-2"><label class="form-label small">Project</label><select class="form-select" name="project_id"><option value="">All</option><% filterOptions.projects.forEach((project) => { %><option value="<%= project.id %>" <%= String(filters.project_id) === String(project.id) ? 'selected' : '' %>><%= project.project_code %></option><% }) %></select></div>
+      <div class="col-md-2"><label class="form-label small">Status</label><input class="form-control" name="status" value="<%= filters.status %>" placeholder="Any status"></div>
+      <div class="col-12 d-flex gap-2 mt-3">
+        <button class="btn btn-outline-success" type="submit">Apply Filters</button>
+        <a class="btn btn-outline-secondary" href="<%= currentPath %>">Reset</a>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <% columns.forEach((column) => { %><th><%= column.label %></th><% }) %>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="<%= columns.length %>" class="text-center text-muted py-5">No report data matched the selected filters.</td></tr>
+        <% } %>
+        <% rows.forEach((row) => { %>
+          <tr>
+            <% columns.forEach((column) => { %>
+              <td><%= row[column.key] === null || row[column.key] === undefined ? '' : row[column.key] %></td>
+            <% }) %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>

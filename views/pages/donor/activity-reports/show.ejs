@@ -1,0 +1,70 @@
+<section class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1"><%= report.title %></h1>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="badge rounded-pill badge-soft-secondary"><%= report.report_code %></span>
+      <span class="badge rounded-pill badge-soft-secondary"><%= report.report_type %></span>
+      <span class="badge rounded-pill badge-soft-success">Approved</span>
+    </div>
+  </div>
+  <div>
+    <a href="/donor/activity-reports" class="btn btn-outline-secondary">Back to Reports</a>
+  </div>
+</section>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <section class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Report Summary</h2>
+        <dl class="row mb-4">
+          <dt class="col-sm-4">Project</dt>
+          <dd class="col-sm-8"><a href="/donor/projects/<%= report.project_id %>"><%= report.project_name %></a></dd>
+          <dt class="col-sm-4">Branch</dt>
+          <dd class="col-sm-8"><%= report.branch_name || 'Not linked' %></dd>
+          <dt class="col-sm-4">Report Date</dt>
+          <dd class="col-sm-8"><%= new Date(report.report_date).toLocaleDateString() %></dd>
+          <dt class="col-sm-4">Approved Date</dt>
+          <dd class="col-sm-8"><%= report.approved_at ? new Date(report.approved_at).toLocaleString() : '-' %></dd>
+        </dl>
+
+        <p><strong>Summary:</strong> <%= report.summary %></p>
+        <p><strong>Activities Completed:</strong> <%= report.activities_completed || '-' %></p>
+        <p><strong>Challenges:</strong> <%= report.challenges || '-' %></p>
+        <p class="mb-0"><strong>Recommendations:</strong> <%= report.recommendations || '-' %></p>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-lg-4">
+    <section class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Beneficiary Summary</h2>
+        <dl class="row mb-4">
+          <dt class="col-sm-7">Total Reached</dt>
+          <dd class="col-sm-5"><%= report.beneficiaries_reached %></dd>
+          <dt class="col-sm-7">Male</dt>
+          <dd class="col-sm-5"><%= report.male_beneficiaries %></dd>
+          <dt class="col-sm-7">Female</dt>
+          <dd class="col-sm-5"><%= report.female_beneficiaries %></dd>
+          <dt class="col-sm-7">Youth</dt>
+          <dd class="col-sm-5"><%= report.youth_beneficiaries %></dd>
+        </dl>
+
+        <h3 class="h6 text-uppercase text-muted mb-3">Attachments</h3>
+        <% if (!attachments.length) { %>
+          <p class="text-muted mb-0">No public-safe attachments are available for this report.</p>
+        <% } else { %>
+          <div class="list-group list-group-flush">
+            <% attachments.forEach((attachment) => { %>
+              <a href="<%= attachment.file_path %>" class="list-group-item list-group-item-action px-0" target="_blank" rel="noopener noreferrer">
+                <div class="fw-semibold"><%= attachment.original_name %></div>
+                <div class="small text-muted"><%= attachment.mime_type %> • <%= Math.round(attachment.file_size / 1024) %> KB</div>
+              </a>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  </div>
+</div>

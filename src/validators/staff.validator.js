@@ -1,10 +1,13 @@
 const { body } = require("express-validator");
 const departmentRepo = require("../repos/department.repo");
 const staffRepo = require("../repos/staff.repo");
+const branchRepo = require("../repos/branch.repo");
+const userRepo = require("../repos/user.repo");
 const { normalizeEmail, normalizeNullable } = require("../utils/tenant-form");
 
 function prepareStaffInput(req, res, next) {
   req.body.staff_code = normalizeNullable(req.body.staff_code);
+  req.body.user_id = normalizeNullable(req.body.user_id);
   req.body.first_name = (req.body.first_name || "").trim();
   req.body.middle_name = normalizeNullable(req.body.middle_name);
   req.body.last_name = (req.body.last_name || "").trim();
@@ -14,6 +17,7 @@ function prepareStaffInput(req, res, next) {
   req.body.email = normalizeEmail(req.body.email);
   req.body.address = normalizeNullable(req.body.address);
   req.body.department_id = normalizeNullable(req.body.department_id);
+  req.body.branch_id = normalizeNullable(req.body.branch_id);
   req.body.position_title = (req.body.position_title || "").trim();
   req.body.start_date = (req.body.start_date || "").trim();
   req.body.end_date = normalizeNullable(req.body.end_date);
@@ -42,6 +46,24 @@ const staffValidator = [
       const department = await departmentRepo.findByIdForTenant(value, req.currentUser.tenant_id);
       if (!department) {
         throw new Error("Selected department was not found.");
+      }
+      return true;
+    }),
+  body("branch_id")
+    .optional({ values: "falsy" })
+    .custom(async (value, { req }) => {
+      const branch = await branchRepo.findByIdForTenant(value, req.currentUser.tenant_id);
+      if (!branch) {
+        throw new Error("Selected branch was not found.");
+      }
+      return true;
+    }),
+  body("user_id")
+    .optional({ values: "falsy" })
+    .custom(async (value, { req }) => {
+      const user = await userRepo.findByIdForTenant(value, req.currentUser.tenant_id);
+      if (!user) {
+        throw new Error("Selected linked user was not found.");
       }
       return true;
     }),

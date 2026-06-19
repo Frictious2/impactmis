@@ -42,6 +42,14 @@ function prepareRejectInput(req, res, next) {
   next();
 }
 
+function prepareSelfCheckinInput(req, res, next) {
+  req.body.latitude = req.body.latitude ? String(req.body.latitude).trim() : "";
+  req.body.longitude = req.body.longitude ? String(req.body.longitude).trim() : "";
+  req.body.location = req.body.location ? String(req.body.location).trim() : "";
+  req.body.device_info = req.body.device_info ? String(req.body.device_info).trim() : "";
+  next();
+}
+
 const attendanceValidator = [
   body("staff_member_id")
     .notEmpty()
@@ -99,11 +107,28 @@ const rejectAttendanceValidator = [
   body("rejection_reason").notEmpty().withMessage("Rejection reason is required.")
 ];
 
+const selfCheckinValidator = [
+  body("latitude")
+    .notEmpty()
+    .withMessage("Current latitude is required.")
+    .bail()
+    .isFloat({ min: -90, max: 90 })
+    .withMessage("Latitude must be valid."),
+  body("longitude")
+    .notEmpty()
+    .withMessage("Current longitude is required.")
+    .bail()
+    .isFloat({ min: -180, max: 180 })
+    .withMessage("Longitude must be valid.")
+];
+
 module.exports = {
   prepareAttendanceInput,
   prepareBulkAttendanceInput,
   prepareRejectInput,
+  prepareSelfCheckinInput,
   attendanceValidator,
   bulkAttendanceValidator,
-  rejectAttendanceValidator
+  rejectAttendanceValidator,
+  selfCheckinValidator
 };

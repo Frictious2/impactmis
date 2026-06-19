@@ -1,0 +1,77 @@
+<section class="card border-0 shadow-sm">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Approved Activity Reports</h1>
+        <p class="text-muted mb-0">Only approved reports are visible in the donor portal.</p>
+      </div>
+    </div>
+
+    <form action="/donor/activity-reports" method="GET" class="row g-3 mb-4">
+      <div class="col-md-3">
+        <label for="project_id" class="form-label">Project</label>
+        <select id="project_id" name="project_id" class="form-select">
+          <option value="">All projects</option>
+          <% projects.forEach((project) => { %>
+            <option value="<%= project.id %>" <%= String(filters.project_id) === String(project.id) ? 'selected' : '' %>><%= project.project_code %> - <%= project.project_name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="report_type" class="form-label">Report Type</label>
+        <select id="report_type" name="report_type" class="form-select">
+          <option value="">All types</option>
+          <% reportTypeOptions.forEach((option) => { %>
+            <option value="<%= option.value %>" <%= filters.report_type === option.value ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="date_from" class="form-label">Date From</label>
+        <input id="date_from" name="date_from" type="date" class="form-control" value="<%= filters.date_from %>" />
+      </div>
+      <div class="col-md-2">
+        <label for="date_to" class="form-label">Date To</label>
+        <input id="date_to" name="date_to" type="date" class="form-control" value="<%= filters.date_to %>" />
+      </div>
+      <div class="col-md-2 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+      </div>
+    </form>
+
+    <% if (!reports.length) { %>
+      <p class="text-muted mb-0">No approved reports match the current filters.</p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Report Code</th>
+              <th>Title</th>
+              <th>Project</th>
+              <th>Type</th>
+              <th>Report Date</th>
+              <th>Beneficiaries</th>
+              <th>Approved Date</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% reports.forEach((report) => { %>
+              <tr>
+                <td class="fw-semibold"><%= report.report_code %></td>
+                <td><%= report.title %></td>
+                <td><%= report.project_name %></td>
+                <td><%= report.report_type %></td>
+                <td><%= new Date(report.report_date).toLocaleDateString() %></td>
+                <td><%= report.beneficiaries_reached %></td>
+                <td><%= report.approved_at ? new Date(report.approved_at).toLocaleDateString() : '-' %></td>
+                <td class="text-end"><a href="/donor/activity-reports/<%= report.id %>" class="btn btn-sm btn-outline-primary">View</a></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</section>

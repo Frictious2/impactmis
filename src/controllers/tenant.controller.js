@@ -1,3 +1,4 @@
+const path = require("path");
 const { validationResult } = require("express-validator");
 const tenantRepo = require("../repos/tenant.repo");
 const organizationProfileRepo = require("../repos/organization-profile.repo");
@@ -6,8 +7,18 @@ const userRepo = require("../repos/user.repo");
 const roleRepo = require("../repos/role.repo");
 const approvalWorkflowRepo = require("../repos/approval-workflow.repo");
 const auditLogRepo = require("../repos/audit-log.repo");
+const branchRepo = require("../repos/branch.repo");
+const projectRepo = require("../repos/project.repo");
+const activityReportRepo = require("../repos/activity-report.repo");
+const indicatorRepo = require("../repos/indicator.repo");
+const budgetRepo = require("../repos/budget.repo");
 const staffService = require("../services/staff.service");
 const attendanceService = require("../services/attendance.service");
+const branchService = require("../services/branch.service");
+const projectService = require("../services/project.service");
+const activityReportService = require("../services/activity-report.service");
+const indicatorService = require("../services/indicator.service");
+const notificationService = require("../services/notification.service");
 const staffRepo = require("../repos/staff.repo");
 const tenantAdminService = require("../services/tenant-admin.service");
 const {
@@ -23,11 +34,36 @@ const {
   getStatusOptions
 } = require("../utils/staff-form");
 const {
+  buildBranchFormData,
+  buildBranchFilters,
+  getBranchStatusOptions
+} = require("../utils/branch-form");
+const {
   buildAttendanceFormData,
   buildAttendanceFilters,
   getAttendanceStatusOptions,
   getAttendanceApprovalOptions
 } = require("../utils/attendance-form");
+const {
+  buildActivityReportFilters,
+  buildActivityReportFormData,
+  getActivityReportTypeOptions,
+  getActivityReportStatusOptions
+} = require("../utils/activity-report-form");
+const {
+  buildIndicatorFormData,
+  buildIndicatorUpdateFormData,
+  getIndicatorStatusOptions
+} = require("../utils/indicator-form");
+const {
+  buildProjectFilters,
+  buildProjectFormData,
+  buildProjectAssignmentFormData,
+  buildProjectTaskFormData,
+  getProjectStatusOptions,
+  getTaskPriorityOptions,
+  getTaskStatusOptions
+} = require("../utils/project-form");
 
 function placeholder(pageTitle, heading, description, breadcrumbLabel) {
   return (req, res) =>
@@ -44,12 +80,36 @@ function isAttendanceApprover(user) {
   return attendanceService.APPROVER_ROLES.has(user.role);
 }
 
+function canApproveActivityReport(user, report) {
+  if (!user || !report) {
+    return false;
+  }
+  if (activityReportService.APPROVER_ROLES.has(user.role)) {
+    return true;
+  }
+  return user.role === activityReportService.HR_ROLE && Boolean(report.staff_member_id);
+}
+
 function renderNotFound(res, title) {
   return res.status(404).render("pages/errors/404", { pageTitle: title });
 }
 
 async function dashboard(req, res, next) {
   try {
+    if (req.currentUser.role === "Tenant Admin" && req.activeLicense?.expires_at) {
+      const expiresAt = new Date(req.activeLicense.expires_at);
+      const daysUntilExpiry = Math.ceil((expiresAt - new Date()) / (1000 * 60 * 60 * 24));
+      if (daysUntilExpiry >= 0 && daysUntilExpiry <= 14) {
+        notificationService.safeUserNotificationOnceToday(req.currentUser.tenant_id, req.currentUser.id, {
+          title: "License expiring soon",
+          message: `Your license expires in ${daysUntilExpiry} day(s).`,
+          type: "warning",
+          category: "license",
+          link_url: "/dashboard",
+          created_by: null
+        });
+      }
+    }
     const stats = await tenantRepo.getTenantDashboardStats(req.currentUser.tenant_id);
 
     return res.render("layouts/tenant-layout", {
@@ -102,7 +162,11 @@ async function staff(req, res, next) {
 
 async function showCreateStaff(req, res, next) {
   try {
-    const departmentsList = await departmentRepo.listByTenantId(req.currentUser.tenant_id);
+    const [departmentsList, branches, users] = await Promise.all([
+      departmentRepo.listByTenantId(req.currentUser.tenant_id),
+      branchRepo.listByTenantId(req.currentUser.tenant_id),
+      userRepo.listActiveByTenantId(req.currentUser.tenant_id)
+    ]);
 
     return res.render("layouts/tenant-layout", {
       pageTitle: "Create Staff Record",
@@ -114,6 +178,8 @@ async function showCreateStaff(req, res, next) {
       ],
       formData: buildStaffFormData({ status: "active", start_date: new Date().toISOString().slice(0, 10) }),
       departments: departmentsList,
+      branches,
+      users,
       employmentTypeOptions: getEmploymentTypeOptions(),
       statusOptions: getStatusOptions(),
       validationErrors: []
@@ -127,7 +193,11 @@ async function createStaff(req, res, next) {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      const departmentsList = await departmentRepo.listByTenantId(req.currentUser.tenant_id);
+      const [departmentsList, branches, users] = await Promise.all([
+        departmentRepo.listByTenantId(req.currentUser.tenant_id),
+        branchRepo.listByTenantId(req.currentUser.tenant_id),
+        userRepo.listActiveByTenantId(req.currentUser.tenant_id)
+      ]);
       return res.status(422).render("layouts/tenant-layout", {
         pageTitle: "Create Staff Record",
         contentPartial: "../pages/tenant/staff/create",
@@ -138,6 +208,8 @@ async function createStaff(req, res, next) {
         ],
         formData: buildStaffFormData(req.body),
         departments: departmentsList,
+        branches,
+        users,
         employmentTypeOptions: getEmploymentTypeOptions(),
         statusOptions: getStatusOptions(),
         validationErrors: errors.array()
@@ -183,9 +255,11 @@ async function showStaffDetail(req, res, next) {
 
 async function showEditStaff(req, res, next) {
   try {
-    const [staffMember, departmentsList] = await Promise.all([
+    const [staffMember, departmentsList, branches, users] = await Promise.all([
       staffService.findStaffById(req.currentUser.tenant_id, req.params.id),
-      departmentRepo.listByTenantId(req.currentUser.tenant_id)
+      departmentRepo.listByTenantId(req.currentUser.tenant_id),
+      branchRepo.listByTenantId(req.currentUser.tenant_id),
+      userRepo.listActiveByTenantId(req.currentUser.tenant_id)
     ]);
 
     if (!staffMember) {
@@ -203,6 +277,8 @@ async function showEditStaff(req, res, next) {
       ],
       formData: buildStaffFormData(staffMember),
       departments: departmentsList,
+      branches,
+      users,
       employmentTypeOptions: getEmploymentTypeOptions(),
       statusOptions: getStatusOptions(),
       validationErrors: [],
@@ -215,9 +291,11 @@ async function showEditStaff(req, res, next) {
 
 async function updateStaff(req, res, next) {
   try {
-    const [staffMember, departmentsList] = await Promise.all([
+    const [staffMember, departmentsList, branches, users] = await Promise.all([
       staffService.findStaffById(req.currentUser.tenant_id, req.params.id),
-      departmentRepo.listByTenantId(req.currentUser.tenant_id)
+      departmentRepo.listByTenantId(req.currentUser.tenant_id),
+      branchRepo.listByTenantId(req.currentUser.tenant_id),
+      userRepo.listActiveByTenantId(req.currentUser.tenant_id)
     ]);
 
     if (!staffMember) {
@@ -237,6 +315,8 @@ async function updateStaff(req, res, next) {
         ],
         formData: buildStaffFormData(req.body),
         departments: departmentsList,
+        branches,
+        users,
         employmentTypeOptions: getEmploymentTypeOptions(),
         statusOptions: getStatusOptions(),
         validationErrors: errors.array(),
@@ -278,6 +358,183 @@ async function updateStaffStatus(req, res, next) {
 
     req.flash("success", `${updated.full_name} status changed to ${updated.status}.`);
     return res.redirect(`/staff/${updated.id}`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function branches(req, res, next) {
+  try {
+    const filters = buildBranchFilters(req.query);
+    const branchList = await branchRepo.listByTenantId(req.currentUser.tenant_id, filters);
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Branches",
+      contentPartial: "../pages/tenant/branches/index",
+      breadcrumbs: [{ label: "Dashboard", href: "/dashboard" }, { label: "Branches" }],
+      branches: branchList,
+      filters,
+      statusOptions: getBranchStatusOptions()
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+function showCreateBranch(req, res) {
+  return res.render("layouts/tenant-layout", {
+    pageTitle: "Create Branch",
+    contentPartial: "../pages/tenant/branches/create",
+    breadcrumbs: [
+      { label: "Dashboard", href: "/dashboard" },
+      { label: "Branches", href: "/branches" },
+      { label: "Create Branch" }
+    ],
+    formData: buildBranchFormData(),
+    statusOptions: getBranchStatusOptions(),
+    validationErrors: []
+  });
+}
+
+async function createBranch(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).render("layouts/tenant-layout", {
+        pageTitle: "Create Branch",
+        contentPartial: "../pages/tenant/branches/create",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Branches", href: "/branches" },
+          { label: "Create Branch" }
+        ],
+        formData: buildBranchFormData(req.body),
+        statusOptions: getBranchStatusOptions(),
+        validationErrors: errors.array()
+      });
+    }
+
+    const branch = await branchService.createBranch(
+      req.currentUser.tenant_id,
+      req.body,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Branch created successfully.");
+    return res.redirect(`/branches/${branch.id}`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showBranchDetail(req, res, next) {
+  try {
+    const branch = await branchRepo.findByIdForTenant(req.params.id, req.currentUser.tenant_id);
+    if (!branch) {
+      return renderNotFound(res, "Branch Not Found");
+    }
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: branch.name,
+      contentPartial: "../pages/tenant/branches/show",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Branches", href: "/branches" },
+        { label: branch.name }
+      ],
+      branch,
+      statusOptions: getBranchStatusOptions()
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showEditBranch(req, res, next) {
+  try {
+    const branch = await branchRepo.findByIdForTenant(req.params.id, req.currentUser.tenant_id);
+    if (!branch) {
+      return renderNotFound(res, "Branch Not Found");
+    }
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: `Edit ${branch.name}`,
+      contentPartial: "../pages/tenant/branches/edit",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Branches", href: "/branches" },
+        { label: branch.name, href: `/branches/${branch.id}` },
+        { label: "Edit" }
+      ],
+      formData: buildBranchFormData(branch),
+      statusOptions: getBranchStatusOptions(),
+      validationErrors: [],
+      branch
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateBranch(req, res, next) {
+  try {
+    const branch = await branchRepo.findByIdForTenant(req.params.id, req.currentUser.tenant_id);
+    if (!branch) {
+      return renderNotFound(res, "Branch Not Found");
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).render("layouts/tenant-layout", {
+        pageTitle: `Edit ${branch.name}`,
+        contentPartial: "../pages/tenant/branches/edit",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Branches", href: "/branches" },
+          { label: branch.name, href: `/branches/${branch.id}` },
+          { label: "Edit" }
+        ],
+        formData: buildBranchFormData(req.body),
+        statusOptions: getBranchStatusOptions(),
+        validationErrors: errors.array(),
+        branch
+      });
+    }
+
+    const updated = await branchService.updateBranch(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.body,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Branch updated successfully.");
+    return res.redirect(`/branches/${updated.id}`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateBranchStatus(req, res, next) {
+  try {
+    const nextStatus = String(req.body.next_status || "").trim();
+    if (!new Set(["active", "inactive"]).has(nextStatus)) {
+      req.flash("error", "Selected branch status is invalid.");
+      return res.redirect(`/branches/${req.params.id}`);
+    }
+
+    const updated = await branchService.updateBranchStatus(
+      req.currentUser.tenant_id,
+      req.params.id,
+      nextStatus,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", `Branch status changed to ${updated.status}.`);
+    return res.redirect(`/branches/${updated.id}`);
   } catch (error) {
     return next(error);
   }
@@ -427,6 +684,58 @@ async function createBulkAttendance(req, res, next) {
   }
 }
 
+async function showSelfCheckin(req, res, next) {
+  try {
+    const linkedStaffMember = await staffRepo.findActiveByEmailForTenant(
+      req.currentUser.tenant_id,
+      req.currentUser.email
+    );
+    const branch = linkedStaffMember?.branch_id
+      ? await branchRepo.findByIdForTenant(linkedStaffMember.branch_id, req.currentUser.tenant_id)
+      : null;
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Self Check-In",
+      contentPartial: "../pages/tenant/attendance/self-checkin",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Attendance", href: "/attendance" },
+        { label: "Self Check-In" }
+      ],
+      linkedStaffMember,
+      branch
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function submitSelfCheckin(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      req.flash("error", errors.array()[0].msg);
+      return res.redirect("/attendance/self-checkin");
+    }
+
+    const record = await attendanceService.selfCheckin(
+      req.currentUser.tenant_id,
+      req.currentUser,
+      req.body,
+      req.ip
+    );
+
+    req.flash("success", "Self check-in captured successfully.");
+    return res.redirect(`/attendance/${record.id}`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect("/attendance/self-checkin");
+    }
+    return next(error);
+  }
+}
+
 async function showAttendanceDetail(req, res, next) {
   try {
     const record = await attendanceService.findAttendanceById(req.currentUser.tenant_id, req.params.id);
@@ -570,6 +879,892 @@ async function rejectAttendance(req, res, next) {
     if (error.statusCode) {
       req.flash("error", error.message);
       return res.redirect(`/attendance/${req.params.id}`);
+    }
+    return next(error);
+  }
+}
+
+async function loadProjectDetailContext(req, projectId, overrides = {}) {
+  const tenantId = req.currentUser.tenant_id;
+  const [project, assignments, tasks, activity, branches, managers, staffMembers, indicators, projectReports, budgetSummary] =
+    await Promise.all([
+    projectService.findProject(tenantId, projectId),
+    projectService.listAssignments(tenantId, projectId),
+    projectRepo.listTasks(tenantId, projectId),
+    auditLogRepo.listProjectActivityByTenantId(tenantId, projectId, 50),
+    branchRepo.listByTenantId(tenantId),
+    userRepo.listActiveByTenantId(tenantId),
+    staffRepo.listActiveAttendanceEligibleByTenantId(tenantId),
+    indicatorService.listIndicators(tenantId, projectId),
+    activityReportRepo.listByProjectId(tenantId, projectId, 10),
+    budgetRepo.getProjectBudgetSummary(tenantId, projectId)
+  ]);
+
+  if (!project) {
+    return null;
+  }
+
+  return {
+    pageTitle: project.project_name,
+    contentPartial: "../pages/tenant/projects/show",
+    breadcrumbs: [
+      { label: "Dashboard", href: "/dashboard" },
+      { label: "Projects", href: "/projects" },
+      { label: project.project_name }
+    ],
+    project,
+    assignments,
+    tasks,
+    activity,
+    branches,
+    managers,
+    staffMembers,
+    indicators,
+    projectReports,
+    budgetSummary,
+    projectStatusOptions: getProjectStatusOptions(),
+    taskPriorityOptions: getTaskPriorityOptions(),
+    taskStatusOptions: getTaskStatusOptions(),
+    indicatorStatusOptions: getIndicatorStatusOptions(),
+    assignmentFormData: buildProjectAssignmentFormData(),
+    taskFormData: buildProjectTaskFormData(),
+    indicatorFormData: buildIndicatorFormData(),
+    indicatorUpdateFormData: buildIndicatorUpdateFormData(),
+    assignmentValidationErrors: [],
+    taskValidationErrors: [],
+    indicatorValidationErrors: [],
+    indicatorUpdateValidationErrors: [],
+    activeTab: "overview",
+    ...overrides
+  };
+}
+
+async function projects(req, res, next) {
+  try {
+    const filters = buildProjectFilters(req.query);
+    const [projectsList, branches, managers] = await Promise.all([
+      projectService.listProjects(req.currentUser.tenant_id, filters),
+      branchRepo.listByTenantId(req.currentUser.tenant_id),
+      userRepo.listActiveByTenantId(req.currentUser.tenant_id)
+    ]);
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Projects",
+      contentPartial: "../pages/tenant/projects/index",
+      breadcrumbs: [{ label: "Dashboard", href: "/dashboard" }, { label: "Projects" }],
+      projects: projectsList,
+      branches,
+      managers,
+      filters,
+      statusOptions: getProjectStatusOptions()
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showCreateProject(req, res, next) {
+  try {
+    const [branches, managers] = await Promise.all([
+      branchRepo.listByTenantId(req.currentUser.tenant_id),
+      userRepo.listActiveByTenantId(req.currentUser.tenant_id)
+    ]);
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Create Project",
+      contentPartial: "../pages/tenant/projects/create",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Projects", href: "/projects" },
+        { label: "Create Project" }
+      ],
+      formData: buildProjectFormData({
+        status: "planning",
+        start_date: new Date().toISOString().slice(0, 10),
+        completion_percentage: 0
+      }),
+      branches,
+      managers,
+      statusOptions: getProjectStatusOptions(),
+      validationErrors: []
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function createProject(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const [branches, managers] = await Promise.all([
+        branchRepo.listByTenantId(req.currentUser.tenant_id),
+        userRepo.listActiveByTenantId(req.currentUser.tenant_id)
+      ]);
+
+      return res.status(422).render("layouts/tenant-layout", {
+        pageTitle: "Create Project",
+        contentPartial: "../pages/tenant/projects/create",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Projects", href: "/projects" },
+          { label: "Create Project" }
+        ],
+        formData: buildProjectFormData(req.body),
+        branches,
+        managers,
+        statusOptions: getProjectStatusOptions(),
+        validationErrors: errors.array()
+      });
+    }
+
+    const project = await projectService.createProject(
+      req.currentUser.tenant_id,
+      req.body,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Project created successfully.");
+    return res.redirect(`/projects/${project.id}`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showProjectDetail(req, res, next) {
+  try {
+    const viewModel = await loadProjectDetailContext(req, req.params.id, {
+      activeTab: req.query.tab || "overview"
+    });
+
+    if (!viewModel) {
+      return renderNotFound(res, "Project Not Found");
+    }
+
+    return res.render("layouts/tenant-layout", viewModel);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showEditProject(req, res, next) {
+  try {
+    const [project, branches, managers] = await Promise.all([
+      projectService.findProject(req.currentUser.tenant_id, req.params.id),
+      branchRepo.listByTenantId(req.currentUser.tenant_id),
+      userRepo.listActiveByTenantId(req.currentUser.tenant_id)
+    ]);
+
+    if (!project) {
+      return renderNotFound(res, "Project Not Found");
+    }
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: `Edit ${project.project_name}`,
+      contentPartial: "../pages/tenant/projects/edit",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Projects", href: "/projects" },
+        { label: project.project_name, href: `/projects/${project.id}` },
+        { label: "Edit" }
+      ],
+      project,
+      formData: buildProjectFormData(project),
+      branches,
+      managers,
+      statusOptions: getProjectStatusOptions(),
+      validationErrors: []
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateProject(req, res, next) {
+  try {
+    const [project, branches, managers] = await Promise.all([
+      projectService.findProject(req.currentUser.tenant_id, req.params.id),
+      branchRepo.listByTenantId(req.currentUser.tenant_id),
+      userRepo.listActiveByTenantId(req.currentUser.tenant_id)
+    ]);
+
+    if (!project) {
+      return renderNotFound(res, "Project Not Found");
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).render("layouts/tenant-layout", {
+        pageTitle: `Edit ${project.project_name}`,
+        contentPartial: "../pages/tenant/projects/edit",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Projects", href: "/projects" },
+          { label: project.project_name, href: `/projects/${project.id}` },
+          { label: "Edit" }
+        ],
+        project,
+        formData: buildProjectFormData(req.body),
+        branches,
+        managers,
+        statusOptions: getProjectStatusOptions(),
+        validationErrors: errors.array()
+      });
+    }
+
+    const updated = await projectService.updateProject(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.body,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Project updated successfully.");
+    return res.redirect(`/projects/${updated.id}`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateProjectStatus(req, res, next) {
+  try {
+    const allowedStatuses = new Set(getProjectStatusOptions().map((option) => option.value));
+    const nextStatus = String(req.body.next_status || "").trim();
+
+    if (!allowedStatuses.has(nextStatus)) {
+      req.flash("error", "Selected project status is invalid.");
+      return res.redirect(`/projects/${req.params.id}`);
+    }
+
+    const updated = await projectService.changeProjectStatus(
+      req.currentUser.tenant_id,
+      req.params.id,
+      nextStatus,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", `Project status changed to ${updated.status}.`);
+    return res.redirect(`/projects/${updated.id}?tab=overview`);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function assignProjectStaff(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const viewModel = await loadProjectDetailContext(req, req.params.id, {
+        activeTab: "assignments",
+        assignmentFormData: buildProjectAssignmentFormData(req.body),
+        assignmentValidationErrors: errors.array()
+      });
+
+      if (!viewModel) {
+        return renderNotFound(res, "Project Not Found");
+      }
+
+      return res.status(422).render("layouts/tenant-layout", viewModel);
+    }
+
+    await projectService.assignStaff(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.body,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Staff assigned to project successfully.");
+    return res.redirect(`/projects/${req.params.id}?tab=assignments`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect(`/projects/${req.params.id}?tab=assignments`);
+    }
+    return next(error);
+  }
+}
+
+async function removeProjectAssignment(req, res, next) {
+  try {
+    if (!req.body.assignment_id) {
+      req.flash("error", "Assignment selection is required.");
+      return res.redirect(`/projects/${req.params.id}?tab=assignments`);
+    }
+
+    await projectService.removeStaff(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.body.assignment_id,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Project assignment removed successfully.");
+    return res.redirect(`/projects/${req.params.id}?tab=assignments`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect(`/projects/${req.params.id}?tab=assignments`);
+    }
+    return next(error);
+  }
+}
+
+async function createProjectTask(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const viewModel = await loadProjectDetailContext(req, req.params.id, {
+        activeTab: "tasks",
+        taskFormData: buildProjectTaskFormData(req.body),
+        taskValidationErrors: errors.array()
+      });
+
+      if (!viewModel) {
+        return renderNotFound(res, "Project Not Found");
+      }
+
+      return res.status(422).render("layouts/tenant-layout", viewModel);
+    }
+
+    await projectService.createTask(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.body,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Project task created successfully.");
+    return res.redirect(`/projects/${req.params.id}?tab=tasks`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect(`/projects/${req.params.id}?tab=tasks`);
+    }
+    return next(error);
+  }
+}
+
+async function updateProjectTask(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const task = await projectRepo.findTask(req.currentUser.tenant_id, req.params.id);
+      if (!task) {
+        return renderNotFound(res, "Project Task Not Found");
+      }
+
+      const viewModel = await loadProjectDetailContext(req, task.project_id, {
+        activeTab: "tasks",
+        taskFormData: buildProjectTaskFormData(req.body),
+        taskValidationErrors: errors.array()
+      });
+
+      return res.status(422).render("layouts/tenant-layout", viewModel);
+    }
+
+    const updated = await projectService.updateTask(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.body,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Project task updated successfully.");
+    return res.redirect(`/projects/${updated.project_id}?tab=tasks`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect("/projects");
+    }
+    return next(error);
+  }
+}
+
+async function updateProjectTaskStatus(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      req.flash("error", errors.array()[0].msg);
+      return res.redirect("/projects");
+    }
+
+    const updated = await projectService.updateTaskStatus(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.body.status,
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Project task status updated successfully.");
+    return res.redirect(`/projects/${updated.project_id}?tab=tasks`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect("/projects");
+    }
+    return next(error);
+  }
+}
+
+async function activityReports(req, res, next) {
+  try {
+    const filters = buildActivityReportFilters(req.query);
+    const [reports, projectsList, branches, staffMembers] = await Promise.all([
+      activityReportService.listReports(req.currentUser.tenant_id, filters),
+      projectService.listProjects(req.currentUser.tenant_id, {}),
+      branchRepo.listByTenantId(req.currentUser.tenant_id),
+      staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id)
+    ]);
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Activity Reports",
+      contentPartial: "../pages/tenant/activity-reports/index",
+      breadcrumbs: [{ label: "Dashboard", href: "/dashboard" }, { label: "Activity Reports" }],
+      reports,
+      projects: projectsList,
+      branches,
+      staffMembers,
+      filters,
+      reportTypeOptions: getActivityReportTypeOptions(),
+      statusOptions: getActivityReportStatusOptions()
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showCreateActivityReport(req, res, next) {
+  try {
+    const [projectsList, branches, staffMembers] = await Promise.all([
+      projectService.listProjects(req.currentUser.tenant_id, {}),
+      branchRepo.listByTenantId(req.currentUser.tenant_id),
+      staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id)
+    ]);
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Create Activity Report",
+      contentPartial: "../pages/tenant/activity-reports/create",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Activity Reports", href: "/activity-reports" },
+        { label: "Create Activity Report" }
+      ],
+      formData: buildActivityReportFormData({
+        report_date: new Date().toISOString().slice(0, 10),
+        report_type: "daily",
+        status: "submitted"
+      }),
+      projects: projectsList,
+      branches,
+      staffMembers,
+      tasks: [],
+      reportTypeOptions: getActivityReportTypeOptions(),
+      statusOptions: getActivityReportStatusOptions(),
+      validationErrors: []
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function createActivityReport(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const [projectsList, branches, staffMembers, tasks] = await Promise.all([
+        projectService.listProjects(req.currentUser.tenant_id, {}),
+        branchRepo.listByTenantId(req.currentUser.tenant_id),
+        staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id),
+        req.body.project_id ? projectRepo.listTasks(req.currentUser.tenant_id, req.body.project_id) : []
+      ]);
+
+      return res.status(422).render("layouts/tenant-layout", {
+        pageTitle: "Create Activity Report",
+        contentPartial: "../pages/tenant/activity-reports/create",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Activity Reports", href: "/activity-reports" },
+          { label: "Create Activity Report" }
+        ],
+        formData: buildActivityReportFormData(req.body),
+        projects: projectsList,
+        branches,
+        staffMembers,
+        tasks,
+        reportTypeOptions: getActivityReportTypeOptions(),
+        statusOptions: getActivityReportStatusOptions(),
+        validationErrors: errors.array()
+      });
+    }
+
+    const report = await activityReportService.createReport(
+      req.currentUser.tenant_id,
+      req.body,
+      req.currentUser,
+      req.ip
+    );
+
+    req.flash("success", "Activity report created successfully.");
+    return res.redirect(`/activity-reports/${report.id}`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect("/activity-reports/create");
+    }
+    return next(error);
+  }
+}
+
+async function loadActivityReportDetailContext(req, reportId, overrides = {}) {
+  const tenantId = req.currentUser.tenant_id;
+  const report = await activityReportService.findReportById(tenantId, reportId);
+  if (!report) {
+    return null;
+  }
+
+  const allowedTabs = new Set(["overview", "attachments", "approval", "indicator-updates", "activity"]);
+  const [attachments, indicatorUpdates, activity] = await Promise.all([
+    activityReportService.listAttachments(tenantId, reportId),
+    activityReportService.listReportIndicatorUpdates(tenantId, reportId),
+    auditLogRepo.listActivityReportActivityByTenantId(tenantId, reportId, 100)
+  ]);
+
+  return {
+    pageTitle: report.title,
+    contentPartial: "../pages/tenant/activity-reports/show",
+    breadcrumbs: [
+      { label: "Dashboard", href: "/dashboard" },
+      { label: "Activity Reports", href: "/activity-reports" },
+      { label: report.title }
+    ],
+    report,
+    attachments: attachments || [],
+    indicatorUpdates: indicatorUpdates || [],
+    activity: activity || [],
+    canApprove: canApproveActivityReport(req.currentUser, report),
+    ...overrides,
+    activeTab: allowedTabs.has(overrides.activeTab) ? overrides.activeTab : "overview"
+  };
+}
+
+async function showActivityReportDetail(req, res, next) {
+  try {
+    const viewModel = await loadActivityReportDetailContext(req, req.params.id, {
+      activeTab: req.query.tab || "overview"
+    });
+    if (!viewModel) {
+      return renderNotFound(res, "Activity Report Not Found");
+    }
+    return res.render("layouts/tenant-layout", viewModel);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function showEditActivityReport(req, res, next) {
+  try {
+    const report = await activityReportService.findReportById(req.currentUser.tenant_id, req.params.id);
+    if (!report) {
+      return renderNotFound(res, "Activity Report Not Found");
+    }
+
+    const [projectsList, branches, staffMembers, tasks] = await Promise.all([
+      projectService.listProjects(req.currentUser.tenant_id, {}),
+      branchRepo.listByTenantId(req.currentUser.tenant_id),
+      staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id),
+      projectRepo.listTasks(req.currentUser.tenant_id, report.project_id)
+    ]);
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: `Edit ${report.title}`,
+      contentPartial: "../pages/tenant/activity-reports/edit",
+      breadcrumbs: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Activity Reports", href: "/activity-reports" },
+        { label: report.title, href: `/activity-reports/${report.id}` },
+        { label: "Edit" }
+      ],
+      report,
+      formData: buildActivityReportFormData(report),
+      projects: projectsList,
+      branches,
+      staffMembers,
+      tasks,
+      reportTypeOptions: getActivityReportTypeOptions(),
+      statusOptions: getActivityReportStatusOptions(),
+      validationErrors: []
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateActivityReport(req, res, next) {
+  try {
+    const report = await activityReportService.findReportById(req.currentUser.tenant_id, req.params.id);
+    if (!report) {
+      return renderNotFound(res, "Activity Report Not Found");
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const [projectsList, branches, staffMembers, tasks] = await Promise.all([
+        projectService.listProjects(req.currentUser.tenant_id, {}),
+        branchRepo.listByTenantId(req.currentUser.tenant_id),
+        staffRepo.listActiveAttendanceEligibleByTenantId(req.currentUser.tenant_id),
+        req.body.project_id ? projectRepo.listTasks(req.currentUser.tenant_id, req.body.project_id) : []
+      ]);
+
+      return res.status(422).render("layouts/tenant-layout", {
+        pageTitle: `Edit ${report.title}`,
+        contentPartial: "../pages/tenant/activity-reports/edit",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Activity Reports", href: "/activity-reports" },
+          { label: report.title, href: `/activity-reports/${report.id}` },
+          { label: "Edit" }
+        ],
+        report,
+        formData: buildActivityReportFormData(req.body),
+        projects: projectsList,
+        branches,
+        staffMembers,
+        tasks,
+        reportTypeOptions: getActivityReportTypeOptions(),
+        statusOptions: getActivityReportStatusOptions(),
+        validationErrors: errors.array()
+      });
+    }
+
+    const updated = await activityReportService.updateReport(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.body,
+      req.currentUser,
+      req.ip
+    );
+
+    req.flash("success", "Activity report updated successfully.");
+    return res.redirect(`/activity-reports/${updated.id}`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect(`/activity-reports/${req.params.id}/edit`);
+    }
+    return next(error);
+  }
+}
+
+async function submitActivityReport(req, res, next) {
+  try {
+    const updated = await activityReportService.submitReport(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.currentUser.id,
+      req.ip
+    );
+    req.flash("success", "Activity report submitted successfully.");
+    return res.redirect(`/activity-reports/${updated.id}?tab=approval`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect(`/activity-reports/${req.params.id}`);
+    }
+    return next(error);
+  }
+}
+
+async function approveActivityReport(req, res, next) {
+  try {
+    const updated = await activityReportService.approveReport(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.currentUser,
+      req.ip
+    );
+    req.flash("success", "Activity report approved successfully.");
+    return res.redirect(`/activity-reports/${updated.id}?tab=approval`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect(`/activity-reports/${req.params.id}?tab=approval`);
+    }
+    return next(error);
+  }
+}
+
+async function rejectActivityReport(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      req.flash("error", errors.array()[0].msg);
+      return res.redirect(`/activity-reports/${req.params.id}?tab=approval`);
+    }
+    const updated = await activityReportService.rejectReport(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.currentUser,
+      req.body.rejection_reason,
+      req.ip
+    );
+    req.flash("success", "Activity report rejected successfully.");
+    return res.redirect(`/activity-reports/${updated.id}?tab=approval`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect(`/activity-reports/${req.params.id}?tab=approval`);
+    }
+    return next(error);
+  }
+}
+
+async function addActivityReportAttachment(req, res, next) {
+  try {
+    if (!req.file) {
+      req.flash("error", "Please choose an image or PDF attachment.");
+      return res.redirect(`/activity-reports/${req.params.id}?tab=attachments`);
+    }
+
+    const relativePath = path.join(
+      "uploads",
+      "activity-reports",
+      String(req.currentUser.tenant_id),
+      req.file.filename
+    ).replace(/\\/g, "/");
+
+    await activityReportService.addAttachment(
+      req.currentUser.tenant_id,
+      req.params.id,
+      {
+        original_name: req.file.originalname,
+        stored_name: req.file.filename,
+        file_path: `/${relativePath}`,
+        mime_type: req.file.mimetype,
+        file_size: req.file.size
+      },
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Attachment uploaded successfully.");
+    return res.redirect(`/activity-reports/${req.params.id}?tab=attachments`);
+  } catch (error) {
+    if (req.file && req.file.path) {
+      try {
+        require("fs").unlinkSync(req.file.path);
+      } catch (_) {}
+    }
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect(`/activity-reports/${req.params.id}?tab=attachments`);
+    }
+    return next(error);
+  }
+}
+
+async function projectIndicators(req, res, next) {
+  try {
+    const viewModel = await loadProjectDetailContext(req, req.params.id, {
+      activeTab: "indicators"
+    });
+    if (!viewModel) {
+      return renderNotFound(res, "Project Not Found");
+    }
+    return res.render("layouts/tenant-layout", viewModel);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function createProjectIndicator(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const viewModel = await loadProjectDetailContext(req, req.params.id, {
+        activeTab: "indicators",
+        indicatorFormData: buildIndicatorFormData(req.body),
+        indicatorValidationErrors: errors.array()
+      });
+      return res.status(422).render("layouts/tenant-layout", viewModel);
+    }
+
+    await indicatorService.createIndicator(
+      req.currentUser.tenant_id,
+      { ...req.body, project_id: req.params.id },
+      req.currentUser.id,
+      req.ip
+    );
+
+    req.flash("success", "Project indicator created successfully.");
+    return res.redirect(`/projects/${req.params.id}?tab=indicators`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      return res.redirect(`/projects/${req.params.id}?tab=indicators`);
+    }
+    return next(error);
+  }
+}
+
+async function updateProjectIndicator(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      req.flash("error", errors.array()[0].msg);
+      return res.redirect("/projects");
+    }
+
+    const updated = await indicatorService.updateIndicator(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.body,
+      req.currentUser.id,
+      req.ip
+    );
+    req.flash("success", "Indicator updated successfully.");
+    return res.redirect(`/projects/${updated.project_id}?tab=indicators`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      const indicator = await indicatorRepo.findIndicatorById(req.currentUser.tenant_id, req.params.id);
+      return res.redirect(indicator ? `/projects/${indicator.project_id}?tab=indicators` : "/projects");
+    }
+    return next(error);
+  }
+}
+
+async function updateIndicatorProgress(req, res, next) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      req.flash("error", errors.array()[0].msg);
+      return res.redirect("/projects");
+    }
+
+    const update = await indicatorService.addIndicatorUpdate(
+      req.currentUser.tenant_id,
+      req.params.id,
+      req.body,
+      req.currentUser.id,
+      req.ip
+    );
+    const indicator = await indicatorRepo.findIndicatorById(req.currentUser.tenant_id, req.params.id);
+    req.flash("success", "Indicator progress updated successfully.");
+    return res.redirect(`/projects/${indicator.project_id}?tab=indicators`);
+  } catch (error) {
+    if (error.statusCode) {
+      req.flash("error", error.message);
+      const indicator = await indicatorRepo.findIndicatorById(req.currentUser.tenant_id, req.params.id);
+      return res.redirect(indicator ? `/projects/${indicator.project_id}?tab=indicators` : "/projects");
     }
     return next(error);
   }
@@ -888,22 +2083,51 @@ module.exports = {
   showEditStaff,
   updateStaff,
   updateStaffStatus,
+  branches,
+  showCreateBranch,
+  createBranch,
+  showBranchDetail,
+  showEditBranch,
+  updateBranch,
+  updateBranchStatus,
   attendance,
   showCreateAttendance,
   createAttendance,
   showBulkAttendance,
   createBulkAttendance,
+  showSelfCheckin,
+  submitSelfCheckin,
   showAttendanceDetail,
   showEditAttendance,
   updateAttendance,
   approveAttendance,
   rejectAttendance,
-  projects: placeholder(
-    "Projects",
-    "Projects",
-    "Project management will be implemented in a future phase.",
-    "Projects"
-  ),
+  projects,
+  showCreateProject,
+  createProject,
+  showProjectDetail,
+  showEditProject,
+  updateProject,
+  updateProjectStatus,
+  assignProjectStaff,
+  removeProjectAssignment,
+  createProjectTask,
+  updateProjectTask,
+  updateProjectTaskStatus,
+  activityReports,
+  showCreateActivityReport,
+  createActivityReport,
+  showActivityReportDetail,
+  showEditActivityReport,
+  updateActivityReport,
+  submitActivityReport,
+  approveActivityReport,
+  rejectActivityReport,
+  addActivityReportAttachment,
+  projectIndicators,
+  createProjectIndicator,
+  updateProjectIndicator,
+  updateIndicatorProgress,
   payroll: placeholder(
     "Payroll",
     "Payroll",

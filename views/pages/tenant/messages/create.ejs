@@ -1,0 +1,22 @@
+<section class="card border-0 shadow-sm">
+  <div class="card-body">
+    <h1 class="h4 mb-3">Compose Message</h1>
+    <% if (validationErrors && validationErrors.length) { %>
+      <div class="alert alert-danger"><% validationErrors.forEach((error) => { %><div><%= error.msg %></div><% }) %></div>
+    <% } %>
+    <form method="post" action="/messages" class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Recipient</label>
+        <select class="form-select" name="recipient_user_id" required>
+          <option value="">Select recipient</option>
+          <% recipients.forEach((user) => { %>
+            <option value="<%= user.id %>" <%= String(formData.recipient_user_id) === String(user.id) ? 'selected' : '' %>><%= user.full_name %> - <%= user.role %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-12"><label class="form-label">Subject</label><input class="form-control" name="subject" value="<%= formData.subject %>" required></div>
+      <div class="col-12"><label class="form-label">Message</label><textarea class="form-control" name="body" rows="8" required><%= formData.body %></textarea></div>
+      <div class="col-12 d-flex gap-2"><button class="btn btn-success" type="submit">Send Message</button><a class="btn btn-outline-secondary" href="/messages">Cancel</a></div>
+    </form>
+  </div>
+</section>

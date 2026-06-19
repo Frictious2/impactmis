@@ -1,0 +1,11 @@
+<%- include("form", {
+  formTitle: `Edit ${project.project_name}`,
+  formAction: `/projects/${project.id}/edit`,
+  submitLabel: "Save Changes",
+  cancelHref: `/projects/${project.id}`,
+  formData,
+  branches,
+  managers,
+  statusOptions,
+  validationErrors
+}) %>

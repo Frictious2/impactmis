@@ -3,11 +3,13 @@ const tenantRepo = require("../repos/tenant.repo");
 const MODULE_CATALOG = [
   { code: "staff", label: "Staff" },
   { code: "attendance", label: "Attendance" },
+  { code: "branches", label: "Branches" },
   { code: "projects", label: "Projects" },
+  { code: "reports", label: "Reports / M&E" },
+  { code: "donors", label: "Donor Portal" },
   { code: "payroll", label: "Payroll" },
-  { code: "reports", label: "Reports" },
-  { code: "approvals", label: "Approvals" },
-  { code: "donors", label: "Donors" }
+  { code: "finance", label: "Finance & Expenses" },
+  { code: "approvals", label: "Approvals" }
 ];
 
 function getModuleCatalog() {
@@ -55,6 +57,23 @@ function normalizeDateInput(value) {
   return String(value || "").trim();
 }
 
+function formatDateInput(value) {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value.slice(0, 10);
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
 function coerceModules(value) {
   if (Array.isArray(value)) {
     return value.filter(Boolean);
@@ -65,6 +84,39 @@ function coerceModules(value) {
   }
 
   return [];
+}
+
+function buildModuleAccessMap(value, { includeMissing = false } = {}) {
+  const selected = new Set(coerceModules(value));
+  return MODULE_CATALOG.reduce((modules, module) => {
+    if (selected.has(module.code)) {
+      modules[module.code] = true;
+    } else if (includeMissing) {
+      modules[module.code] = false;
+    }
+    return modules;
+  }, {});
+}
+
+function getSelectedModuleCodes(value) {
+  const parsed = parseJsonField(value, value);
+
+  if (Array.isArray(parsed)) {
+    return parsed;
+  }
+
+  if (parsed && typeof parsed === "object") {
+    return Object.entries(parsed)
+      .filter(([, enabled]) => !(enabled === false || enabled === "false" || enabled === 0 || enabled === "0"))
+      .map(([code]) => code);
+  }
+
+  return coerceModules(value);
+}
+
+function getModuleLabel(code) {
+  const module = MODULE_CATALOG.find((item) => item.code === code);
+  return module ? module.label : code;
 }
 
 function parseJsonField(value, fallback = null) {
@@ -156,11 +208,13 @@ function buildTenantCreateFormData(source = {}) {
 }
 
 function buildLicenseFormData(source = {}) {
+  const selectedModules = getSelectedModuleCodes(source.modules || source.modules_json);
   return {
     plan_name: source.plan_name || "Standard",
     duration_months: source.duration_months || 12,
-    starts_at: source.starts_at || new Date().toISOString().slice(0, 10),
-    modules: coerceModules(source.modules).length ? coerceModules(source.modules) : getModuleCodes(),
+    starts_at: formatDateInput(source.starts_at) || new Date().toISOString().slice(0, 10),
+    expires_at: formatDateInput(source.expires_at),
+    modules: selectedModules.length ? selectedModules : getModuleCodes(),
     seat_limit: source.seat_limit || 25,
     status: source.status || "active"
   };
@@ -169,11 +223,15 @@ function buildLicenseFormData(source = {}) {
 module.exports = {
   getModuleCatalog,
   getModuleCodes,
+  buildModuleAccessMap,
+  getSelectedModuleCodes,
+  getModuleLabel,
   normalizeNullable,
   normalizeEmail,
   normalizeTenantCode,
   slugify,
   normalizeDateInput,
+  formatDateInput,
   coerceModules,
   buildUniqueTenantCode,
   buildUniqueSlug,

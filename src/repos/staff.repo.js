@@ -31,12 +31,21 @@ async function listStaff(tenantId, filters = {}, db = pool) {
     `
       SELECT
         sm.*,
+        linked_user.full_name AS linked_user_name,
+        linked_user.email AS linked_user_email,
         d.department_name,
+        b.name AS branch_name,
         CONCAT_WS(' ', sm.first_name, sm.middle_name, sm.last_name) AS full_name
       FROM staff_members sm
       LEFT JOIN departments d
         ON d.id = sm.department_id
        AND d.tenant_id = sm.tenant_id
+      LEFT JOIN branches b
+        ON b.id = sm.branch_id
+       AND b.tenant_id = sm.tenant_id
+      LEFT JOIN users linked_user
+        ON linked_user.id = sm.user_id
+       AND linked_user.tenant_id = sm.tenant_id
       WHERE ${where.join(" AND ")}
       ORDER BY sm.created_at DESC, sm.id DESC
     `,
@@ -51,7 +60,10 @@ async function findStaffById(tenantId, id, db = pool) {
     `
       SELECT
         sm.*,
+        linked_user.full_name AS linked_user_name,
+        linked_user.email AS linked_user_email,
         d.department_name,
+        b.name AS branch_name,
         CONCAT_WS(' ', sm.first_name, sm.middle_name, sm.last_name) AS full_name,
         creator.full_name AS created_by_name,
         updater.full_name AS updated_by_name
@@ -59,6 +71,12 @@ async function findStaffById(tenantId, id, db = pool) {
       LEFT JOIN departments d
         ON d.id = sm.department_id
        AND d.tenant_id = sm.tenant_id
+      LEFT JOIN branches b
+        ON b.id = sm.branch_id
+       AND b.tenant_id = sm.tenant_id
+      LEFT JOIN users linked_user
+        ON linked_user.id = sm.user_id
+       AND linked_user.tenant_id = sm.tenant_id
       LEFT JOIN users creator ON creator.id = sm.created_by
       LEFT JOIN users updater ON updater.id = sm.updated_by
       WHERE sm.tenant_id = ?
@@ -76,6 +94,7 @@ async function createStaff(tenantId, payload, userId, db = pool) {
     `
       INSERT INTO staff_members (
         tenant_id,
+        user_id,
         staff_code,
         first_name,
         middle_name,
@@ -86,6 +105,7 @@ async function createStaff(tenantId, payload, userId, db = pool) {
         email,
         address,
         department_id,
+        branch_id,
         position_title,
         employment_type,
         start_date,
@@ -97,10 +117,11 @@ async function createStaff(tenantId, payload, userId, db = pool) {
         created_by,
         updated_by
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       tenantId,
+      payload.user_id,
       payload.staff_code,
       payload.first_name,
       payload.middle_name,
@@ -111,6 +132,7 @@ async function createStaff(tenantId, payload, userId, db = pool) {
       payload.email,
       payload.address,
       payload.department_id,
+      payload.branch_id,
       payload.position_title,
       payload.employment_type,
       payload.start_date,
@@ -133,6 +155,7 @@ async function updateStaff(tenantId, id, payload, userId, db = pool) {
       UPDATE staff_members
       SET
         staff_code = ?,
+        user_id = ?,
         first_name = ?,
         middle_name = ?,
         last_name = ?,
@@ -142,6 +165,7 @@ async function updateStaff(tenantId, id, payload, userId, db = pool) {
         email = ?,
         address = ?,
         department_id = ?,
+        branch_id = ?,
         position_title = ?,
         employment_type = ?,
         start_date = ?,
@@ -156,6 +180,7 @@ async function updateStaff(tenantId, id, payload, userId, db = pool) {
     `,
     [
       payload.staff_code,
+      payload.user_id,
       payload.first_name,
       payload.middle_name,
       payload.last_name,
@@ -165,6 +190,7 @@ async function updateStaff(tenantId, id, payload, userId, db = pool) {
       payload.email,
       payload.address,
       payload.department_id,
+      payload.branch_id,
       payload.position_title,
       payload.employment_type,
       payload.start_date,
@@ -180,6 +206,31 @@ async function updateStaff(tenantId, id, payload, userId, db = pool) {
   );
 
   return findStaffById(tenantId, id, db);
+}
+
+async function findByUserIdForTenant(tenantId, userId, db = pool) {
+  const [rows] = await db.query(
+    `
+      SELECT
+        sm.*,
+        d.department_name,
+        b.name AS branch_name,
+        CONCAT_WS(' ', sm.first_name, sm.middle_name, sm.last_name) AS full_name
+      FROM staff_members sm
+      LEFT JOIN departments d
+        ON d.id = sm.department_id
+       AND d.tenant_id = sm.tenant_id
+      LEFT JOIN branches b
+        ON b.id = sm.branch_id
+       AND b.tenant_id = sm.tenant_id
+      WHERE sm.tenant_id = ?
+        AND sm.user_id = ?
+      LIMIT 1
+    `,
+    [tenantId, userId]
+  );
+
+  return rows[0] || null;
 }
 
 async function changeStaffStatus(tenantId, id, status, endDate, userId, db = pool) {
@@ -293,11 +344,16 @@ async function listActiveAttendanceEligibleByTenantId(tenantId, db = pool) {
         sm.position_title,
         sm.employment_type,
         sm.department_id,
+        sm.branch_id,
+        b.name AS branch_name,
         d.department_name
       FROM staff_members sm
       LEFT JOIN departments d
         ON d.id = sm.department_id
        AND d.tenant_id = sm.tenant_id
+      LEFT JOIN branches b
+        ON b.id = sm.branch_id
+       AND b.tenant_id = sm.tenant_id
       WHERE sm.tenant_id = ?
         AND sm.status = 'active'
         AND sm.employment_type IN ('staff', 'volunteer', 'consultant', 'intern')
@@ -307,6 +363,32 @@ async function listActiveAttendanceEligibleByTenantId(tenantId, db = pool) {
   );
 
   return rows;
+}
+
+async function findActiveByEmailForTenant(tenantId, email, db = pool) {
+  const [rows] = await db.query(
+    `
+      SELECT
+        sm.*,
+        d.department_name,
+        b.name AS branch_name,
+        CONCAT_WS(' ', sm.first_name, sm.middle_name, sm.last_name) AS full_name
+      FROM staff_members sm
+      LEFT JOIN departments d
+        ON d.id = sm.department_id
+       AND d.tenant_id = sm.tenant_id
+      LEFT JOIN branches b
+        ON b.id = sm.branch_id
+       AND b.tenant_id = sm.tenant_id
+      WHERE sm.tenant_id = ?
+        AND sm.status = 'active'
+        AND LOWER(sm.email) = LOWER(?)
+      LIMIT 1
+    `,
+    [tenantId, email]
+  );
+
+  return rows[0] || null;
 }
 
 module.exports = {
@@ -320,5 +402,7 @@ module.exports = {
   existsEmailForTenant,
   countActiveByTenantId,
   countActiveVolunteersByTenantId,
-  listActiveAttendanceEligibleByTenantId
+  listActiveAttendanceEligibleByTenantId,
+  findActiveByEmailForTenant,
+  findByUserIdForTenant
 };

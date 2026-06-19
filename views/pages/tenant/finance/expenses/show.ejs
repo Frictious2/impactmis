@@ -1,0 +1,47 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div><h1 class="h4 mb-1"><%= expense.expense_code %></h1><p class="text-muted mb-0"><%= expense.description %></p></div>
+  <div class="d-flex gap-2"><% if (canEditExpense) { %><a class="btn btn-outline-secondary" href="/expenses/<%= expense.id %>/edit">Edit</a><% } %><a class="btn btn-outline-secondary" href="/expenses">Back</a></div>
+</section>
+<section class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Amount</div><div class="h4">NLe <%= money(expense.amount) %></div></div></div></div>
+  <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Status</div><span class="badge text-bg-<%= statusBadge(expense.status) %>"><%= expense.status %></span></div></div></div>
+  <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Project</div><div><%= expense.project_name || 'None' %></div></div></div></div>
+  <div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Category</div><div><%= expense.category_name %></div></div></div></div>
+</section>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <section class="card border-0 shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">Overview</h2>
+      <dl class="row mb-0">
+        <dt class="col-sm-4">Expense Date</dt><dd class="col-sm-8"><%= formatDate(expense.expense_date) %></dd>
+        <dt class="col-sm-4">Branch</dt><dd class="col-sm-8"><%= expense.branch_name || 'None' %></dd>
+        <dt class="col-sm-4">Vendor</dt><dd class="col-sm-8"><%= expense.vendor_name || 'Not set' %></dd>
+        <dt class="col-sm-4">Payment Method</dt><dd class="col-sm-8"><%= expense.payment_method %></dd>
+        <dt class="col-sm-4">Receipt Number</dt><dd class="col-sm-8"><%= expense.receipt_number || 'Not set' %></dd>
+        <dt class="col-sm-4">Submitted By</dt><dd class="col-sm-8"><%= expense.submitted_by_name || 'Unknown' %></dd>
+        <dt class="col-sm-4">Approved By</dt><dd class="col-sm-8"><%= expense.approved_by_name || 'Not approved' %></dd>
+        <dt class="col-sm-4">Paid By</dt><dd class="col-sm-8"><%= expense.paid_by_name || 'Not paid' %></dd>
+        <% if (expense.rejection_reason) { %><dt class="col-sm-4">Rejection Reason</dt><dd class="col-sm-8"><%= expense.rejection_reason %></dd><% } %>
+      </dl>
+    </div></section>
+    <section class="card border-0 shadow-sm"><div class="card-body">
+      <h2 class="h5">Attachments</h2>
+      <form method="post" action="/expenses/<%= expense.id %>/attachments" enctype="multipart/form-data" class="d-flex gap-2 mb-3"><input class="form-control" name="receipt_file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf"><button class="btn btn-outline-success" type="submit">Upload</button></form>
+      <% if (!attachments.length) { %><p class="text-muted mb-0">No attachments uploaded.</p><% } %>
+      <% attachments.forEach((attachment) => { %><div class="border rounded p-2 mb-2 d-flex justify-content-between"><span><%= attachment.original_name %></span><a href="<%= attachment.file_path %>" target="_blank">View</a></div><% }) %>
+    </div></section>
+  </div>
+  <div class="col-lg-4">
+    <section class="card border-0 shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">Approval Actions</h2>
+      <div class="d-flex flex-column gap-2">
+        <% if (canEditExpense && expense.status === 'draft') { %><form method="post" action="/expenses/<%= expense.id %>/submit"><button class="btn btn-outline-warning w-100">Submit</button></form><% } %>
+        <% if (canApproveExpense && expense.status === 'submitted') { %><form method="post" action="/expenses/<%= expense.id %>/approve"><button class="btn btn-outline-success w-100">Approve</button></form><% } %>
+        <% if (canApproveExpense && expense.status === 'submitted') { %><form method="post" action="/expenses/<%= expense.id %>/reject"><textarea class="form-control mb-2" name="rejection_reason" rows="2" placeholder="Reason" required></textarea><button class="btn btn-outline-danger w-100">Reject</button></form><% } %>
+        <% if (canApproveExpense && expense.status === 'approved') { %><form method="post" action="/expenses/<%= expense.id %>/mark-paid"><button class="btn btn-outline-primary w-100">Mark Paid</button></form><% } %>
+        <% if (canEditExpense && !['paid','cancelled'].includes(expense.status)) { %><form method="post" action="/expenses/<%= expense.id %>/cancel"><button class="btn btn-outline-dark w-100">Cancel</button></form><% } %>
+      </div>
+    </div></section>
+    <section class="card border-0 shadow-sm"><div class="card-body"><h2 class="h5">Activity</h2><% if (!activity.length) { %><p class="text-muted mb-0">No activity yet.</p><% } %><% activity.forEach((entry) => { %><div class="small border-bottom py-2"><strong><%= entry.action %></strong><br><span class="text-muted"><%= new Date(entry.created_at).toLocaleString() %></span></div><% }) %></div></section>
+  </div>
+</div>

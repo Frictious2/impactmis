@@ -1,0 +1,141 @@
+<section class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1"><%= project.project_name %></h1>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="badge rounded-pill badge-soft-secondary"><%= project.project_code %></span>
+      <span class="badge rounded-pill <%= project.status === 'active' ? 'badge-soft-success' : 'badge-soft-primary' %>"><%= project.status %></span>
+      <span class="badge rounded-pill badge-soft-secondary"><%= project.completion_percentage %>% complete</span>
+    </div>
+  </div>
+  <div>
+    <a href="/donor/projects" class="btn btn-outline-secondary">Back to Projects</a>
+  </div>
+</section>
+
+<section class="card border-0 shadow-sm">
+  <div class="card-body">
+    <ul class="nav nav-tabs mb-4">
+      <li class="nav-item"><a class="nav-link <%= activeTab === 'overview' ? 'active' : '' %>" href="/donor/projects/<%= project.id %>?tab=overview">Overview</a></li>
+      <li class="nav-item"><a class="nav-link <%= activeTab === 'indicators' ? 'active' : '' %>" href="/donor/projects/<%= project.id %>?tab=indicators">Indicators</a></li>
+      <li class="nav-item"><a class="nav-link <%= activeTab === 'reports' ? 'active' : '' %>" href="/donor/projects/<%= project.id %>?tab=reports">Approved Reports</a></li>
+      <li class="nav-item"><a class="nav-link <%= activeTab === 'beneficiaries' ? 'active' : '' %>" href="/donor/projects/<%= project.id %>?tab=beneficiaries">Beneficiary Summary</a></li>
+    </ul>
+
+    <% if (activeTab === 'overview') { %>
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <section class="border rounded-3 p-3 h-100">
+            <h2 class="h5 mb-3">Project Summary</h2>
+            <dl class="row mb-0">
+              <dt class="col-sm-5">Branch</dt>
+              <dd class="col-sm-7"><%= project.branch_name || 'Unassigned' %></dd>
+              <dt class="col-sm-5">Donor</dt>
+              <dd class="col-sm-7"><%= project.donor_name || 'Not specified' %></dd>
+              <dt class="col-sm-5">Start Date</dt>
+              <dd class="col-sm-7"><%= new Date(project.start_date).toLocaleDateString() %></dd>
+              <dt class="col-sm-5">End Date</dt>
+              <dd class="col-sm-7"><%= project.end_date ? new Date(project.end_date).toLocaleDateString() : 'Open-ended' %></dd>
+              <dt class="col-sm-5">Completion</dt>
+              <dd class="col-sm-7"><%= project.completion_percentage %>%</dd>
+            </dl>
+          </section>
+        </div>
+        <div class="col-lg-6">
+          <section class="border rounded-3 p-3 h-100">
+            <h2 class="h5 mb-3">Description</h2>
+            <p class="text-muted mb-0"><%= project.project_description %></p>
+          </section>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (activeTab === 'indicators') { %>
+      <% if (!indicators.length) { %>
+        <p class="text-muted mb-0">No indicators are available for this project yet.</p>
+      <% } else { %>
+        <div class="d-flex flex-column gap-3">
+          <% indicators.forEach((indicator) => { %>
+            <% const progress = Number(indicator.target_value) > 0 ? Math.min(100, Math.round((Number(indicator.current_value) / Number(indicator.target_value)) * 100)) : 0; %>
+            <section class="border rounded-3 p-3">
+              <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-2">
+                <div>
+                  <div class="fw-semibold"><%= indicator.indicator_name %></div>
+                  <div class="small text-muted"><%= indicator.unit || 'No unit' %> • <%= indicator.status %></div>
+                </div>
+                <div class="text-end">
+                  <div class="fw-semibold"><%= indicator.current_value %> / <%= indicator.target_value %></div>
+                  <div class="small text-muted"><%= progress %>%</div>
+                </div>
+              </div>
+              <div class="progress" role="progressbar" aria-valuenow="<%= progress %>" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar bg-success" style="width: <%= progress %>%"></div>
+              </div>
+            </section>
+          <% }) %>
+        </div>
+      <% } %>
+    <% } %>
+
+    <% if (activeTab === 'reports') { %>
+      <% if (!reports.length) { %>
+        <p class="text-muted mb-0">No approved reports are available for this project yet.</p>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Report Code</th>
+                <th>Title</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Beneficiaries</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% reports.forEach((report) => { %>
+                <tr>
+                  <td class="fw-semibold"><%= report.report_code %></td>
+                  <td><%= report.title %></td>
+                  <td><%= new Date(report.report_date).toLocaleDateString() %></td>
+                  <td><%= report.report_type %></td>
+                  <td><%= report.beneficiaries_reached %></td>
+                  <td class="text-end"><a href="/donor/activity-reports/<%= report.id %>" class="btn btn-sm btn-outline-primary">View</a></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    <% } %>
+
+    <% if (activeTab === 'beneficiaries') { %>
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="card border-0 bg-body-secondary h-100">
+            <div class="card-body">
+              <div class="text-muted small">Total Beneficiaries</div>
+              <div class="display-6 fw-semibold"><%= beneficiarySummary.totals.totalBeneficiaries %></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card border-0 bg-body-secondary h-100">
+            <div class="card-body">
+              <div class="text-muted small">Male / Female</div>
+              <div class="display-6 fw-semibold"><%= beneficiarySummary.totals.maleBeneficiaries %> / <%= beneficiarySummary.totals.femaleBeneficiaries %></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card border-0 bg-body-secondary h-100">
+            <div class="card-body">
+              <div class="text-muted small">Youth</div>
+              <div class="display-6 fw-semibold"><%= beneficiarySummary.totals.youthBeneficiaries %></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</section>

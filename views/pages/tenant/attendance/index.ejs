@@ -3,9 +3,10 @@
     <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
       <div>
         <h1 class="h4 mb-1">Attendance</h1>
-        <p class="text-muted mb-0">Capture daily attendance and manage review status.</p>
+        <p class="text-muted mb-0">Capture daily attendance, track branch-based entries, and manage review status.</p>
       </div>
       <div class="d-flex gap-2">
+        <a href="/attendance/self-checkin" class="btn btn-outline-dark">Self Check-In</a>
         <a href="/attendance/create" class="btn btn-primary">Single Entry</a>
         <a href="/attendance/bulk" class="btn btn-outline-secondary">Bulk Entry</a>
       </div>
@@ -69,7 +70,7 @@
     <% if (!records.length) { %>
       <div class="p-4">
         <h2 class="h5">No attendance records found</h2>
-        <p class="text-muted mb-3">Start with a single entry or use the bulk form for daily capture.</p>
+        <p class="text-muted mb-3">Start with a single entry, capture bulk attendance, or let staff check in from their assigned branch.</p>
       </div>
     <% } else { %>
       <div class="table-responsive">
@@ -81,6 +82,7 @@
               <th>Staff Name</th>
               <th>Department</th>
               <th>Status</th>
+              <th>Branch</th>
               <th>Check In</th>
               <th>Check Out</th>
               <th>Hours</th>
@@ -96,9 +98,10 @@
                 <td><%= record.staff_name %></td>
                 <td><%= record.department_name || 'Unassigned' %></td>
                 <td><span class="badge rounded-pill badge-soft-secondary"><%= record.status %></span></td>
-                <td><%= record.check_in_time ? String(record.check_in_time).slice(0, 5) : '—' %></td>
-                <td><%= record.check_out_time ? String(record.check_out_time).slice(0, 5) : '—' %></td>
-                <td><%= record.hours_worked || '—' %></td>
+                <td><%= record.branch_name || 'Unassigned' %></td>
+                <td><%= record.check_in_time ? String(record.check_in_time).slice(0, 5) : '-' %></td>
+                <td><%= record.check_out_time ? String(record.check_out_time).slice(0, 5) : '-' %></td>
+                <td><%= record.hours_worked || '-' %></td>
                 <td>
                   <span class="badge rounded-pill <%= record.approval_status === 'approved' ? 'badge-soft-success' : record.approval_status === 'rejected' ? 'badge-soft-danger' : record.approval_status === 'submitted' ? 'badge-soft-warning' : 'badge-soft-secondary' %>">
                     <%= record.approval_status %>

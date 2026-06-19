@@ -1,0 +1,63 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 mb-1">Notifications</h1>
+    <p class="text-muted mb-0">View tenant and personal in-app notifications.</p>
+  </div>
+  <form method="post" action="/notifications/read-all">
+    <button class="btn btn-outline-success" type="submit">Mark All Read</button>
+  </form>
+</section>
+
+<section class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <form class="row g-2">
+      <div class="col-md-4">
+        <select class="form-select" name="category">
+          <option value="">All categories</option>
+          <% categories.forEach((category) => { %>
+            <option value="<%= category %>" <%= filters.category === category ? 'selected' : '' %>><%= category %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <select class="form-select" name="read_state">
+          <option value="">All</option>
+          <option value="unread" <%= filters.read_state === 'unread' ? 'selected' : '' %>>Unread</option>
+          <option value="read" <%= filters.read_state === 'read' ? 'selected' : '' %>>Read</option>
+        </select>
+      </div>
+      <div class="col-md-4"><button class="btn btn-outline-success w-100" type="submit">Filter</button></div>
+    </form>
+  </div>
+</section>
+
+<section class="card border-0 shadow-sm">
+  <div class="list-group list-group-flush">
+    <% if (!notifications.length) { %>
+      <div class="list-group-item text-center text-muted py-5">No notifications found.</div>
+    <% } %>
+    <% notifications.forEach((notification) => { %>
+      <div class="list-group-item">
+        <div class="d-flex justify-content-between gap-3">
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge text-bg-<%= notification.type %>"><%= notification.type %></span>
+              <strong><%= notification.title %></strong>
+              <% if (!notification.is_read) { %><span class="badge text-bg-danger">Unread</span><% } %>
+            </div>
+            <p class="text-muted mb-1"><%= notification.message %></p>
+            <div class="small text-muted"><%= notification.category %> · <%= new Date(notification.created_at).toLocaleString() %></div>
+          </div>
+          <div class="d-flex flex-column gap-2 align-items-end">
+            <% if (notification.link_url) { %><a class="btn btn-sm btn-outline-secondary" href="<%= notification.link_url %>">Open</a><% } %>
+            <% if (!notification.is_read) { %>
+              <form method="post" action="/notifications/<%= notification.id %>/read">
+                <button class="btn btn-sm btn-outline-success" type="submit">Mark Read</button>
+              </form>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</section>

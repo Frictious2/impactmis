@@ -1,0 +1,84 @@
+<section class="card border-0 shadow-sm payslip-card">
+  <div class="card-body p-4 p-lg-5">
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+      <div>
+        <div class="text-uppercase text-success small fw-semibold">Payslip</div>
+        <h1 class="h3 mb-1"><%= organizationProfile?.organization_name || currentTenant?.name || 'ImpactMIS Organization' %></h1>
+        <% if (organizationProfile?.address || organizationProfile?.city || organizationProfile?.country) { %>
+          <p class="text-muted mb-0">
+            <%= [organizationProfile.address, organizationProfile.city, organizationProfile.country].filter(Boolean).join(', ') %>
+          </p>
+        <% } %>
+      </div>
+      <div class="text-end">
+        <div class="fw-semibold"><%= item.payslip_reference %></div>
+        <div class="text-muted">Payroll <%= item.payroll_month %>/<%= item.payroll_year %></div>
+      </div>
+    </div>
+
+    <div class="no-print d-flex gap-2 mb-4">
+      <a class="btn btn-outline-secondary" href="<%= backHref %>">Back</a>
+      <a class="btn btn-success" href="<%= printMode ? '#' : `${currentPath}/print` %>" <%= printMode ? 'onclick="window.print(); return false;"' : '' %>>Print Payslip</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Staff Code</div>
+          <div class="fw-semibold"><%= item.staff_code %></div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Staff Name</div>
+          <div class="fw-semibold"><%= item.staff_name %></div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Department</div>
+          <div class="fw-semibold"><%= item.department_name || 'Unassigned' %></div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Branch</div>
+          <div class="fw-semibold"><%= item.branch_name || 'Unassigned' %></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <tbody>
+              <tr><th>Base Salary</th><td class="text-end">NLe <%= money(item.base_salary) %></td></tr>
+              <tr><th>Allowance Total</th><td class="text-end">NLe <%= money(item.allowance_total) %></td></tr>
+              <tr><th>Gross Pay</th><td class="text-end fw-semibold">NLe <%= money(item.gross_pay) %></td></tr>
+              <tr><th>Deduction Total</th><td class="text-end text-danger">NLe <%= money(item.deduction_total) %></td></tr>
+              <tr class="table-success"><th>Net Pay</th><td class="text-end fw-bold">NLe <%= money(item.net_pay) %></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="border rounded p-3 mb-3">
+          <div class="text-muted small">Attendance Summary</div>
+          <div>Present: <strong><%= item.attendance_days_present || 0 %></strong></div>
+          <div>Absent: <strong><%= item.attendance_days_absent || 0 %></strong></div>
+        </div>
+        <div class="border rounded p-3">
+          <div class="text-muted small">Payment</div>
+          <div class="mb-1">
+            <span class="badge text-bg-<%= item.payment_status === 'paid' ? 'success' : 'secondary' %> text-capitalize">
+              <%= item.payment_status || 'unpaid' %>
+            </span>
+          </div>
+          <div>Payment date: <strong><%= item.payment_date ? formatDate(item.payment_date) : 'Not paid' %></strong></div>
+          <div>Generated: <strong><%= formatDate(item.run_created_at || item.created_at) %></strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

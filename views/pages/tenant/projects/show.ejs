@@ -1,0 +1,477 @@
+<section class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1"><%= project.project_name %></h1>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="badge rounded-pill badge-soft-secondary"><%= project.project_code %></span>
+      <span class="badge rounded-pill <%= project.status === 'active' ? 'badge-soft-success' : project.status === 'completed' ? 'badge-soft-primary' : project.status === 'on_hold' ? 'badge-soft-warning' : project.status === 'cancelled' ? 'badge-soft-danger' : 'badge-soft-secondary' %>"><%= project.status %></span>
+      <span class="badge rounded-pill badge-soft-secondary"><%= project.completion_percentage %>% complete</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/projects/<%= project.id %>/budgets" class="btn btn-outline-success">Budgets</a>
+    <a href="/projects/<%= project.id %>/edit" class="btn btn-primary">Edit</a>
+    <a href="/projects" class="btn btn-outline-secondary">Back to List</a>
+  </div>
+</section>
+
+<section class="card section-card mb-4">
+  <div class="card-body">
+    <ul class="nav nav-tabs mb-4">
+      <li class="nav-item"><a class="nav-link <%= activeTab === 'overview' ? 'active' : '' %>" href="/projects/<%= project.id %>?tab=overview">Overview</a></li>
+      <li class="nav-item"><a class="nav-link <%= activeTab === 'assignments' ? 'active' : '' %>" href="/projects/<%= project.id %>?tab=assignments">Assignments</a></li>
+      <li class="nav-item"><a class="nav-link <%= activeTab === 'tasks' ? 'active' : '' %>" href="/projects/<%= project.id %>?tab=tasks">Tasks</a></li>
+      <li class="nav-item"><a class="nav-link <%= activeTab === 'indicators' ? 'active' : '' %>" href="/projects/<%= project.id %>?tab=indicators">Indicators</a></li>
+      <li class="nav-item"><a class="nav-link <%= activeTab === 'activity-reports' ? 'active' : '' %>" href="/projects/<%= project.id %>?tab=activity-reports">Activity Reports</a></li>
+      <li class="nav-item"><a class="nav-link <%= activeTab === 'activity' ? 'active' : '' %>" href="/projects/<%= project.id %>?tab=activity">Activity</a></li>
+    </ul>
+
+    <% if (activeTab === 'overview') { %>
+      <div class="row g-4">
+        <div class="col-xl-6">
+          <section class="border rounded-3 p-3 h-100">
+            <h2 class="h5 mb-3">Project Summary</h2>
+            <dl class="row mb-0">
+              <dt class="col-sm-5">Branch</dt>
+              <dd class="col-sm-7"><%= project.branch_name || 'Unassigned' %></dd>
+              <dt class="col-sm-5">Project Manager</dt>
+              <dd class="col-sm-7"><%= project.project_manager_name || 'Unassigned' %></dd>
+              <dt class="col-sm-5">Donor</dt>
+              <dd class="col-sm-7"><%= project.donor_name || 'Not set' %></dd>
+              <dt class="col-sm-5">Budget</dt>
+              <dd class="col-sm-7"><%= project.budget ? Number(project.budget).toLocaleString() : 'Not set' %></dd>
+              <dt class="col-sm-5">Start Date</dt>
+              <dd class="col-sm-7"><%= new Date(project.start_date).toLocaleDateString() %></dd>
+              <dt class="col-sm-5">End Date</dt>
+              <dd class="col-sm-7"><%= project.end_date ? new Date(project.end_date).toLocaleDateString() : 'Not set' %></dd>
+              <dt class="col-sm-5">Indicators</dt>
+              <dd class="col-sm-7"><%= indicators.length %> active indicator(s)</dd>
+              <dt class="col-sm-5">Activity Reports</dt>
+              <dd class="col-sm-7"><%= projectReports.length %> latest report(s)</dd>
+              <dt class="col-sm-5">Budget Tracking</dt>
+              <dd class="col-sm-7">
+                NLe <%= Number(budgetSummary.total_spent || 0).toLocaleString() %> spent of
+                NLe <%= Number(budgetSummary.total_budget || 0).toLocaleString() %>
+                (<a href="/projects/<%= project.id %>/budgets">manage budgets</a>)
+              </dd>
+            </dl>
+          </section>
+        </div>
+        <div class="col-xl-6">
+          <section class="border rounded-3 p-3 h-100">
+            <h2 class="h5 mb-3">Description</h2>
+            <p class="mb-4 text-muted"><%= project.project_description %></p>
+            <h3 class="h6 text-uppercase text-muted mb-3">Change Status</h3>
+            <form action="/projects/<%= project.id %>/status" method="POST" class="d-flex flex-column flex-lg-row gap-3 align-items-lg-end">
+              <div>
+                <label for="next_status" class="form-label">Status</label>
+                <select id="next_status" name="next_status" class="form-select">
+                  <% projectStatusOptions.forEach((option) => { %>
+                    <option value="<%= option.value %>" <%= project.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-outline-dark">Update Status</button>
+            </form>
+          </section>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (activeTab === 'indicators') { %>
+      <% const indicatorValidationMap = {}; %>
+      <% (indicatorValidationErrors || []).forEach((error) => { indicatorValidationMap[error.path] = error.msg; }); %>
+      <% const indicatorUpdateValidationMap = {}; %>
+      <% (indicatorUpdateValidationErrors || []).forEach((error) => { indicatorUpdateValidationMap[error.path] = error.msg; }); %>
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <section class="border rounded-3 p-3 h-100">
+            <h2 class="h5 mb-3">Create Indicator</h2>
+            <form action="/projects/<%= project.id %>/indicators" method="POST" class="d-flex flex-column gap-3">
+              <div>
+                <label for="indicator_name" class="form-label">Indicator Name</label>
+                <input id="indicator_name" name="indicator_name" type="text" class="form-control <%= indicatorValidationMap.indicator_name ? 'is-invalid' : '' %>" value="<%= indicatorFormData.indicator_name %>" />
+                <% if (indicatorValidationMap.indicator_name) { %><div class="invalid-feedback"><%= indicatorValidationMap.indicator_name %></div><% } %>
+              </div>
+              <div>
+                <label for="indicator_description" class="form-label">Description</label>
+                <textarea id="indicator_description" name="description" class="form-control" rows="3"><%= indicatorFormData.description %></textarea>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="target_value" class="form-label">Target Value</label>
+                  <input id="target_value" name="target_value" type="number" step="0.01" min="0" class="form-control <%= indicatorValidationMap.target_value ? 'is-invalid' : '' %>" value="<%= indicatorFormData.target_value %>" />
+                  <% if (indicatorValidationMap.target_value) { %><div class="invalid-feedback"><%= indicatorValidationMap.target_value %></div><% } %>
+                </div>
+                <div class="col-md-4">
+                  <label for="unit" class="form-label">Unit</label>
+                  <input id="unit" name="unit" type="text" class="form-control" value="<%= indicatorFormData.unit %>" />
+                </div>
+                <div class="col-md-4">
+                  <label for="indicator_status" class="form-label">Status</label>
+                  <select id="indicator_status" name="status" class="form-select">
+                    <% indicatorStatusOptions.forEach((option) => { %>
+                      <option value="<%= option.value %>" <%= indicatorFormData.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+                    <% }) %>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">Create Indicator</button>
+            </form>
+          </section>
+        </div>
+        <div class="col-lg-7">
+          <section class="border rounded-3 p-3 h-100">
+            <h2 class="h5 mb-3">Project Indicators</h2>
+            <% if (!indicators.length) { %>
+              <p class="text-muted mb-0">No indicators have been configured for this project yet.</p>
+            <% } else { %>
+              <div class="d-flex flex-column gap-3">
+                <% indicators.forEach((indicator) => { %>
+                  <article class="border rounded-3 p-3">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
+                      <div>
+                        <h3 class="h6 mb-1"><%= indicator.indicator_name %></h3>
+                        <div class="small text-muted"><%= indicator.unit || 'No unit' %> · Status: <%= indicator.status %></div>
+                      </div>
+                      <div class="text-end">
+                        <div class="fw-semibold"><%= indicator.current_value %> / <%= indicator.target_value %></div>
+                        <% const progress = Number(indicator.target_value) > 0 ? Math.min(100, Math.round((Number(indicator.current_value) / Number(indicator.target_value)) * 100)) : 0; %>
+                        <div class="progress mt-2" style="width: 180px;">
+                          <div class="progress-bar" role="progressbar" style="width: <%= progress %>%;" aria-valuenow="<%= progress %>" aria-valuemin="0" aria-valuemax="100"><%= progress %>%</div>
+                        </div>
+                      </div>
+                    </div>
+                    <% if (indicator.description) { %><p class="text-muted"><%= indicator.description %></p><% } %>
+                    <div class="row g-3">
+                      <div class="col-lg-6">
+                        <form action="/indicators/<%= indicator.id %>/edit" method="POST" class="d-flex flex-column gap-2">
+                          <input name="indicator_name" type="text" class="form-control form-control-sm" value="<%= indicator.indicator_name %>" />
+                          <textarea name="description" class="form-control form-control-sm" rows="2"><%= indicator.description || '' %></textarea>
+                          <div class="row g-2">
+                            <div class="col-4"><input name="target_value" type="number" step="0.01" min="0" class="form-control form-control-sm" value="<%= indicator.target_value %>" /></div>
+                            <div class="col-4"><input name="unit" type="text" class="form-control form-control-sm" value="<%= indicator.unit || '' %>" /></div>
+                            <div class="col-4">
+                              <select name="status" class="form-select form-select-sm">
+                                <% indicatorStatusOptions.forEach((option) => { %>
+                                  <option value="<%= option.value %>" <%= indicator.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+                                <% }) %>
+                              </select>
+                            </div>
+                          </div>
+                          <button type="submit" class="btn btn-sm btn-outline-secondary">Save Indicator</button>
+                        </form>
+                      </div>
+                      <div class="col-lg-6">
+                        <form action="/indicators/<%= indicator.id %>/update-progress" method="POST" class="d-flex flex-column gap-2">
+                          <div class="row g-2">
+                            <div class="col-6">
+                              <input name="update_value" type="number" step="0.01" min="0" class="form-control form-control-sm <%= indicatorUpdateValidationMap.update_value ? 'is-invalid' : '' %>" placeholder="Progress value" value="<%= indicatorUpdateFormData.update_value %>" />
+                            </div>
+                            <div class="col-6">
+                              <select name="activity_report_id" class="form-select form-select-sm">
+                                <option value="">No linked report</option>
+                                <% projectReports.forEach((reportItem) => { %>
+                                <option value="<%= reportItem.id %>" <%= String(indicatorUpdateFormData.activity_report_id) === String(reportItem.id) ? 'selected' : '' %>><%= reportItem.report_code %> - <%= reportItem.title %></option>
+                                <% }) %>
+                              </select>
+                            </div>
+                          </div>
+                          <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Notes"><%= indicatorUpdateFormData.notes %></textarea>
+                          <button type="submit" class="btn btn-sm btn-outline-dark">Update Progress</button>
+                        </form>
+                      </div>
+                    </div>
+                  </article>
+                <% }) %>
+              </div>
+            <% } %>
+          </section>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (activeTab === 'activity-reports') { %>
+      <section class="border rounded-3 p-3">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
+          <div>
+            <h2 class="h5 mb-1">Project Activity Reports</h2>
+            <p class="text-muted mb-0">Latest reports linked to this project.</p>
+          </div>
+          <div>
+            <a href="/activity-reports/create" class="btn btn-primary">Create Activity Report</a>
+          </div>
+        </div>
+        <% if (!projectReports.length) { %>
+          <p class="text-muted mb-0">No activity reports have been created for this project yet.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Report Code</th>
+                  <th>Title</th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Beneficiaries</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% projectReports.forEach((reportItem) => { %>
+                  <tr>
+                    <td class="fw-semibold"><%= reportItem.report_code %></td>
+                    <td><%= reportItem.title %></td>
+                    <td><%= new Date(reportItem.report_date).toLocaleDateString() %></td>
+                    <td><%= reportItem.report_type %></td>
+                    <td><span class="badge rounded-pill <%= reportItem.status === 'approved' ? 'badge-soft-success' : reportItem.status === 'rejected' ? 'badge-soft-danger' : reportItem.status === 'submitted' ? 'badge-soft-warning' : 'badge-soft-secondary' %>"><%= reportItem.status %></span></td>
+                    <td><%= reportItem.beneficiaries_reached %></td>
+                    <td class="text-end"><a href="/activity-reports/<%= reportItem.id %>" class="btn btn-sm btn-outline-primary">View</a></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </section>
+    <% } %>
+
+    <% if (activeTab === 'assignments') { %>
+      <% const assignmentValidationMap = {}; %>
+      <% (assignmentValidationErrors || []).forEach((error) => { assignmentValidationMap[error.path] = error.msg; }); %>
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <section class="border rounded-3 p-3 h-100">
+            <h2 class="h5 mb-3">Assign Staff</h2>
+            <form action="/projects/<%= project.id %>/assign" method="POST" class="d-flex flex-column gap-3">
+              <div>
+                <label for="staff_member_id" class="form-label">Staff Member</label>
+                <select id="staff_member_id" name="staff_member_id" class="form-select <%= assignmentValidationMap.staff_member_id ? 'is-invalid' : '' %>">
+                  <option value="">Select staff member</option>
+                  <% staffMembers.forEach((staffMember) => { %>
+                    <option value="<%= staffMember.id %>" <%= String(assignmentFormData.staff_member_id) === String(staffMember.id) ? 'selected' : '' %>><%= staffMember.staff_code %> - <%= staffMember.full_name %></option>
+                  <% }) %>
+                </select>
+                <% if (assignmentValidationMap.staff_member_id) { %><div class="invalid-feedback"><%= assignmentValidationMap.staff_member_id %></div><% } %>
+              </div>
+              <div>
+                <label for="assignment_role" class="form-label">Assignment Role</label>
+                <input id="assignment_role" name="assignment_role" type="text" class="form-control <%= assignmentValidationMap.assignment_role ? 'is-invalid' : '' %>" value="<%= assignmentFormData.assignment_role %>" />
+                <% if (assignmentValidationMap.assignment_role) { %><div class="invalid-feedback"><%= assignmentValidationMap.assignment_role %></div><% } %>
+              </div>
+              <div>
+                <label for="assigned_date" class="form-label">Assigned Date</label>
+                <input id="assigned_date" name="assigned_date" type="date" class="form-control <%= assignmentValidationMap.assigned_date ? 'is-invalid' : '' %>" value="<%= assignmentFormData.assigned_date %>" />
+                <% if (assignmentValidationMap.assigned_date) { %><div class="invalid-feedback"><%= assignmentValidationMap.assigned_date %></div><% } %>
+              </div>
+              <button type="submit" class="btn btn-primary">Add Assignment</button>
+            </form>
+          </section>
+        </div>
+        <div class="col-lg-7">
+          <section class="border rounded-3 p-3 h-100">
+            <h2 class="h5 mb-3">Assigned Staff</h2>
+            <% if (!assignments.length) { %>
+              <p class="text-muted mb-0">No staff have been assigned to this project yet.</p>
+            <% } else { %>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Staff</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                      <th>Assigned</th>
+                      <th class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% assignments.forEach((assignment) => { %>
+                      <tr>
+                        <td>
+                          <div class="fw-semibold"><%= assignment.staff_name %></div>
+                          <div class="small text-muted"><%= assignment.staff_code %> - <%= assignment.position_title %></div>
+                        </td>
+                        <td><%= assignment.assignment_role %></td>
+                        <td><span class="badge rounded-pill <%= assignment.status === 'active' ? 'badge-soft-success' : assignment.status === 'completed' ? 'badge-soft-primary' : 'badge-soft-secondary' %>"><%= assignment.status %></span></td>
+                        <td><%= new Date(assignment.assigned_date).toLocaleDateString() %></td>
+                        <td class="text-end">
+                          <% if (assignment.status === 'active') { %>
+                            <form action="/projects/<%= project.id %>/remove-assignment" method="POST">
+                              <input type="hidden" name="assignment_id" value="<%= assignment.id %>" />
+                              <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                            </form>
+                          <% } %>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            <% } %>
+          </section>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (activeTab === 'tasks') { %>
+      <% const taskValidationMap = {}; %>
+      <% (taskValidationErrors || []).forEach((error) => { taskValidationMap[error.path] = error.msg; }); %>
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <section class="border rounded-3 p-3 h-100">
+            <h2 class="h5 mb-3">Create Task</h2>
+            <form action="/projects/<%= project.id %>/tasks" method="POST" class="d-flex flex-column gap-3">
+              <div>
+                <label for="title" class="form-label">Title</label>
+                <input id="title" name="title" type="text" class="form-control <%= taskValidationMap.title ? 'is-invalid' : '' %>" value="<%= taskFormData.title %>" />
+                <% if (taskValidationMap.title) { %><div class="invalid-feedback"><%= taskValidationMap.title %></div><% } %>
+              </div>
+              <div>
+                <label for="description" class="form-label">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="3"><%= taskFormData.description %></textarea>
+              </div>
+              <div>
+                <label for="assigned_staff_id" class="form-label">Assigned Staff</label>
+                <select id="assigned_staff_id" name="assigned_staff_id" class="form-select <%= taskValidationMap.assigned_staff_id ? 'is-invalid' : '' %>">
+                  <option value="">Unassigned</option>
+                  <% staffMembers.forEach((staffMember) => { %>
+                    <option value="<%= staffMember.id %>" <%= String(taskFormData.assigned_staff_id) === String(staffMember.id) ? 'selected' : '' %>><%= staffMember.staff_code %> - <%= staffMember.full_name %></option>
+                  <% }) %>
+                </select>
+                <% if (taskValidationMap.assigned_staff_id) { %><div class="invalid-feedback"><%= taskValidationMap.assigned_staff_id %></div><% } %>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="priority" class="form-label">Priority</label>
+                  <select id="priority" name="priority" class="form-select <%= taskValidationMap.priority ? 'is-invalid' : '' %>">
+                    <% taskPriorityOptions.forEach((option) => { %>
+                      <option value="<%= option.value %>" <%= taskFormData.priority === option.value ? 'selected' : '' %>><%= option.label %></option>
+                    <% }) %>
+                  </select>
+                  <% if (taskValidationMap.priority) { %><div class="invalid-feedback"><%= taskValidationMap.priority %></div><% } %>
+                </div>
+                <div class="col-md-6">
+                  <label for="due_date" class="form-label">Due Date</label>
+                  <input id="due_date" name="due_date" type="date" class="form-control <%= taskValidationMap.due_date ? 'is-invalid' : '' %>" value="<%= taskFormData.due_date %>" />
+                  <% if (taskValidationMap.due_date) { %><div class="invalid-feedback"><%= taskValidationMap.due_date %></div><% } %>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">Create Task</button>
+            </form>
+          </section>
+        </div>
+        <div class="col-lg-7">
+          <section class="border rounded-3 p-3 h-100">
+            <h2 class="h5 mb-3">Tasks</h2>
+            <% if (!tasks.length) { %>
+              <p class="text-muted mb-0">No tasks have been created for this project yet.</p>
+            <% } else { %>
+              <div class="d-flex flex-column gap-3">
+                <% tasks.forEach((task) => { %>
+                  <article class="border rounded-3 p-3">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
+                      <div>
+                        <h3 class="h6 mb-1"><%= task.title %></h3>
+                        <div class="small text-muted">
+                          <%= task.assigned_staff_name ? `${task.staff_code} - ${task.assigned_staff_name}` : 'Unassigned' %>
+                          <% if (task.due_date) { %> · Due <%= new Date(task.due_date).toLocaleDateString() %><% } %>
+                        </div>
+                      </div>
+                      <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge rounded-pill <%= task.priority === 'high' ? 'badge-soft-danger' : task.priority === 'medium' ? 'badge-soft-warning' : 'badge-soft-secondary' %>"><%= task.priority %></span>
+                        <span class="badge rounded-pill <%= task.status === 'completed' ? 'badge-soft-success' : task.status === 'in_progress' ? 'badge-soft-primary' : 'badge-soft-secondary' %>"><%= task.status %></span>
+                        <span class="badge rounded-pill badge-soft-secondary"><%= task.completion_percentage %>%</span>
+                      </div>
+                    </div>
+                    <% if (task.description) { %>
+                      <p class="text-muted mb-3"><%= task.description %></p>
+                    <% } %>
+                    <div class="row g-3">
+                      <div class="col-lg-8">
+                        <form action="/tasks/<%= task.id %>/edit" method="POST" class="row g-2">
+                          <div class="col-md-6">
+                            <input name="title" type="text" class="form-control form-control-sm" value="<%= task.title %>" />
+                          </div>
+                          <div class="col-md-6">
+                            <select name="assigned_staff_id" class="form-select form-select-sm">
+                              <option value="">Unassigned</option>
+                              <% staffMembers.forEach((staffMember) => { %>
+                                <option value="<%= staffMember.id %>" <%= String(task.assigned_staff_id) === String(staffMember.id) ? 'selected' : '' %>><%= staffMember.full_name %></option>
+                              <% }) %>
+                            </select>
+                          </div>
+                          <div class="col-md-4">
+                            <select name="priority" class="form-select form-select-sm">
+                              <% taskPriorityOptions.forEach((option) => { %>
+                                <option value="<%= option.value %>" <%= task.priority === option.value ? 'selected' : '' %>><%= option.label %></option>
+                              <% }) %>
+                            </select>
+                          </div>
+                          <div class="col-md-4">
+                            <input name="due_date" type="date" class="form-control form-control-sm" value="<%= task.due_date ? String(task.due_date).slice(0, 10) : '' %>" />
+                          </div>
+                          <div class="col-md-4">
+                            <input name="completion_percentage" type="number" min="0" max="100" class="form-control form-control-sm" value="<%= task.completion_percentage %>" />
+                          </div>
+                          <div class="col-12">
+                            <textarea name="description" class="form-control form-control-sm" rows="2"><%= task.description || '' %></textarea>
+                          </div>
+                          <input type="hidden" name="status" value="<%= task.status %>" />
+                          <div class="col-12">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Save Task</button>
+                          </div>
+                        </form>
+                      </div>
+                      <div class="col-lg-4">
+                        <form action="/tasks/<%= task.id %>/status" method="POST" class="d-flex flex-column gap-2">
+                          <select name="status" class="form-select form-select-sm">
+                            <% taskStatusOptions.forEach((option) => { %>
+                              <option value="<%= option.value %>" <%= task.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+                            <% }) %>
+                          </select>
+                          <button type="submit" class="btn btn-sm btn-outline-dark">Update Status</button>
+                        </form>
+                      </div>
+                    </div>
+                  </article>
+                <% }) %>
+              </div>
+            <% } %>
+          </section>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (activeTab === 'activity') { %>
+      <% if (!activity.length) { %>
+        <p class="text-muted mb-0">No project activity has been recorded yet.</p>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Action</th>
+                <th>Actor</th>
+                <th>Entity</th>
+                <th>Metadata</th>
+                <th>When</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% activity.forEach((log) => { %>
+                <tr>
+                  <td><span class="fw-semibold"><%= log.action %></span></td>
+                  <td><%= log.user_name || 'System' %></td>
+                  <td><%= log.entity_type %> <%= log.entity_id ? `#${log.entity_id}` : '' %></td>
+                  <td><code class="small"><%= log.metadata_json ? JSON.stringify(log.metadata_json) : '-' %></code></td>
+                  <td><%= new Date(log.created_at).toLocaleString() %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    <% } %>
+  </div>
+</section>

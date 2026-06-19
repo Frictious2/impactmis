@@ -11,6 +11,14 @@
     <div class="col-sm-6 col-xl-3">
       <div class="card border-0 shadow-sm stat-card">
         <div class="card-body">
+          <div class="text-muted small">Total Branches</div>
+          <div class="display-6 fw-semibold"><%= stats.totalBranches %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
           <div class="text-muted small">Today's Attendance</div>
           <div class="display-6 fw-semibold"><%= stats.todayAttendanceCount %></div>
         </div>
@@ -19,8 +27,144 @@
     <div class="col-sm-6 col-xl-3">
       <div class="card border-0 shadow-sm stat-card">
         <div class="card-body">
+          <div class="text-muted small">Today's Self Check-Ins</div>
+          <div class="display-6 fw-semibold"><%= stats.todaySelfCheckins %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Active Projects</div>
+          <div class="display-6 fw-semibold"><%= stats.activeProjectCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Completed Projects</div>
+          <div class="display-6 fw-semibold"><%= stats.completedProjectCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Staff Assigned</div>
+          <div class="display-6 fw-semibold"><%= stats.assignedProjectStaffCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Overdue Tasks</div>
+          <div class="display-6 fw-semibold"><%= stats.overdueTaskCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Submitted Reports</div>
+          <div class="display-6 fw-semibold"><%= stats.submittedReportCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Pending Report Approvals</div>
+          <div class="display-6 fw-semibold"><%= stats.pendingReportApprovalsCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Approved Reports This Month</div>
+          <div class="display-6 fw-semibold"><%= stats.approvedReportsThisMonthCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Beneficiaries This Month</div>
+          <div class="display-6 fw-semibold"><%= stats.beneficiariesReachedThisMonth %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Current Month Payroll</div>
+          <div class="display-6 fw-semibold text-capitalize"><%= stats.currentMonthPayrollStatus.replace('_', ' ') %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Net Payroll This Month</div>
+          <div class="display-6 fw-semibold">NLe <%= Number(stats.currentMonthPayrollNet || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Pending Payroll Approval</div>
+          <div class="display-6 fw-semibold"><%= stats.pendingPayrollApprovalCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Expenses This Month</div>
+          <div class="display-6 fw-semibold"><%= stats.expensesThisMonthCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Pending Expense Approvals</div>
+          <div class="display-6 fw-semibold"><%= stats.pendingExpenseApprovalsCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Approved Expenses This Month</div>
+          <div class="display-6 fw-semibold">NLe <%= Number(stats.approvedExpensesThisMonth || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Project Budget Utilization</div>
+          <div class="display-6 fw-semibold"><%= stats.projectBudgetUtilization %>%</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
           <div class="text-muted small">Pending Attendance Approvals</div>
           <div class="display-6 fw-semibold"><%= stats.pendingAttendanceApprovalsCount %></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card">
+        <div class="card-body">
+          <div class="text-muted small">Outside Geofence Attempts</div>
+          <div class="display-6 fw-semibold"><%= stats.outsideGeofenceAttempts %></div>
         </div>
       </div>
     </div>

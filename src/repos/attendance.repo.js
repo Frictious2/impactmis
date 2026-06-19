@@ -42,6 +42,8 @@ async function listAttendance(tenantId, filters = {}, db = pool) {
         CONCAT_WS(' ', sm.first_name, sm.middle_name, sm.last_name) AS staff_name,
         sm.department_id,
         d.department_name,
+        ar.branch_id,
+        b.name AS branch_name,
         entered_by_user.full_name AS entered_by_name,
         approved_by_user.full_name AS approved_by_name
       FROM attendance_records ar
@@ -51,6 +53,9 @@ async function listAttendance(tenantId, filters = {}, db = pool) {
       LEFT JOIN departments d
         ON d.id = sm.department_id
        AND d.tenant_id = sm.tenant_id
+      LEFT JOIN branches b
+        ON b.id = ar.branch_id
+       AND b.tenant_id = ar.tenant_id
       LEFT JOIN users entered_by_user ON entered_by_user.id = ar.entered_by
       LEFT JOIN users approved_by_user ON approved_by_user.id = ar.approved_by
       WHERE ${where.join(" AND ")}
@@ -73,6 +78,8 @@ async function findAttendanceById(tenantId, id, db = pool) {
         sm.employment_type,
         sm.department_id,
         d.department_name,
+        ar.branch_id,
+        b.name AS branch_name,
         entered_by_user.full_name AS entered_by_name,
         approved_by_user.full_name AS approved_by_name
       FROM attendance_records ar
@@ -82,6 +89,9 @@ async function findAttendanceById(tenantId, id, db = pool) {
       LEFT JOIN departments d
         ON d.id = sm.department_id
        AND d.tenant_id = sm.tenant_id
+      LEFT JOIN branches b
+        ON b.id = ar.branch_id
+       AND b.tenant_id = ar.tenant_id
       LEFT JOIN users entered_by_user ON entered_by_user.id = ar.entered_by
       LEFT JOIN users approved_by_user ON approved_by_user.id = ar.approved_by
       WHERE ar.tenant_id = ?
@@ -116,29 +126,43 @@ async function create(tenantId, payload, userId, db = pool) {
       INSERT INTO attendance_records (
         tenant_id,
         staff_member_id,
+        branch_id,
+        capture_method,
         attendance_date,
         status,
         check_in_time,
         check_out_time,
         hours_worked,
         location,
+        latitude,
+        longitude,
+        distance_from_branch_meters,
+        geofence_status,
+        device_info,
         notes,
         entered_by,
         approved_by,
         approval_status,
         rejection_reason
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       tenantId,
       payload.staff_member_id,
+      payload.branch_id,
+      payload.capture_method,
       payload.attendance_date,
       payload.status,
       payload.check_in_time,
       payload.check_out_time,
       payload.hours_worked,
       payload.location,
+      payload.latitude,
+      payload.longitude,
+      payload.distance_from_branch_meters,
+      payload.geofence_status,
+      payload.device_info,
       payload.notes,
       userId || null,
       payload.approved_by || null,
@@ -156,12 +180,19 @@ async function update(tenantId, id, payload, userId, db = pool) {
       UPDATE attendance_records
       SET
         staff_member_id = ?,
+        branch_id = ?,
+        capture_method = ?,
         attendance_date = ?,
         status = ?,
         check_in_time = ?,
         check_out_time = ?,
         hours_worked = ?,
         location = ?,
+        latitude = ?,
+        longitude = ?,
+        distance_from_branch_meters = ?,
+        geofence_status = ?,
+        device_info = ?,
         notes = ?,
         entered_by = COALESCE(entered_by, ?),
         approved_by = ?,
@@ -172,12 +203,19 @@ async function update(tenantId, id, payload, userId, db = pool) {
     `,
     [
       payload.staff_member_id,
+      payload.branch_id,
+      payload.capture_method,
       payload.attendance_date,
       payload.status,
       payload.check_in_time,
       payload.check_out_time,
       payload.hours_worked,
       payload.location,
+      payload.latitude,
+      payload.longitude,
+      payload.distance_from_branch_meters,
+      payload.geofence_status,
+      payload.device_info,
       payload.notes,
       userId || null,
       payload.approved_by || null,
@@ -251,6 +289,35 @@ async function countPendingApprovalsByTenantId(tenantId, db = pool) {
   return row.total;
 }
 
+async function countTodaySelfCheckinsByTenantId(tenantId, db = pool) {
+  const [[row]] = await db.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM attendance_records
+      WHERE tenant_id = ?
+        AND attendance_date = CURDATE()
+        AND capture_method = 'self_check_in'
+    `,
+    [tenantId]
+  );
+
+  return row.total;
+}
+
+async function countOutsideGeofenceAttemptsByTenantId(tenantId, db = pool) {
+  const [[row]] = await db.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM audit_logs
+      WHERE tenant_id = ?
+        AND action = 'attendance.geofence_failed'
+    `,
+    [tenantId]
+  );
+
+  return row.total;
+}
+
 module.exports = {
   listAttendance,
   findAttendanceById,
@@ -260,5 +327,7 @@ module.exports = {
   approveAttendance,
   rejectAttendance,
   countTodayByTenantId,
-  countPendingApprovalsByTenantId
+  countPendingApprovalsByTenantId,
+  countTodaySelfCheckinsByTenantId,
+  countOutsideGeofenceAttemptsByTenantId
 };

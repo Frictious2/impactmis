@@ -1,0 +1,78 @@
+<section class="card section-card mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Branches</h1>
+        <p class="text-muted mb-0">Manage branch locations and the attendance geofence assigned to each site.</p>
+      </div>
+      <div>
+        <a href="/branches/create" class="btn btn-primary">Create Branch</a>
+      </div>
+    </div>
+
+    <form method="GET" action="/branches" class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label for="search" class="form-label">Search</label>
+        <input id="search" name="search" type="text" class="form-control" value="<%= filters.search %>" placeholder="Search branch code, name, or district" />
+      </div>
+      <div class="col-md-3">
+        <label for="status" class="form-label">Status</label>
+        <select id="status" name="status" class="form-select">
+          <option value="">All</option>
+          <% statusOptions.forEach((option) => { %>
+            <option value="<%= option.value %>" <%= filters.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-4 d-flex gap-2">
+        <button type="submit" class="btn btn-dark flex-grow-1">Filter</button>
+        <a href="/branches" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="card section-card">
+  <div class="card-body p-0">
+    <% if (!branches.length) { %>
+      <div class="p-4">
+        <h2 class="h5">No branches found</h2>
+        <p class="text-muted mb-3">Create the first branch to begin assigning staff and using geofenced self check-ins.</p>
+      </div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Branch Code</th>
+              <th>Branch Name</th>
+              <th>District</th>
+              <th>Geofence Radius</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% branches.forEach((branch) => { %>
+              <tr>
+                <td class="fw-semibold"><%= branch.branch_code %></td>
+                <td><%= branch.name %></td>
+                <td><%= branch.district || 'Not set' %></td>
+                <td><%= branch.geofence_radius_meters %> m</td>
+                <td>
+                  <span class="badge rounded-pill <%= branch.status === 'active' ? 'badge-soft-success' : 'badge-soft-secondary' %>">
+                    <%= branch.status %>
+                  </span>
+                </td>
+                <td class="text-end">
+                  <a href="/branches/<%= branch.id %>" class="btn btn-sm btn-outline-primary">View</a>
+                  <a href="/branches/<%= branch.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</section>

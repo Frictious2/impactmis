@@ -1,12 +1,15 @@
 const pool = require("../db/pool");
 const staffRepo = require("../repos/staff.repo");
 const departmentRepo = require("../repos/department.repo");
+const branchRepo = require("../repos/branch.repo");
+const userRepo = require("../repos/user.repo");
 const auditLogRepo = require("../repos/audit-log.repo");
 const { normalizeEmail, normalizeNullable } = require("../utils/tenant-form");
 
 function normalizeStaffPayload(payload) {
   return {
     staff_code: normalizeNullable(payload.staff_code),
+    user_id: normalizeNullable(payload.user_id),
     first_name: payload.first_name.trim(),
     middle_name: normalizeNullable(payload.middle_name),
     last_name: payload.last_name.trim(),
@@ -16,6 +19,7 @@ function normalizeStaffPayload(payload) {
     email: normalizeEmail(payload.email),
     address: normalizeNullable(payload.address),
     department_id: normalizeNullable(payload.department_id),
+    branch_id: normalizeNullable(payload.branch_id),
     position_title: payload.position_title.trim(),
     employment_type: payload.employment_type,
     start_date: payload.start_date,
@@ -42,6 +46,36 @@ async function assertDepartmentBelongsToTenant(tenantId, departmentId, db = pool
   return department;
 }
 
+async function assertBranchBelongsToTenant(tenantId, branchId, db = pool) {
+  if (!branchId) {
+    return null;
+  }
+
+  const branch = await branchRepo.findByIdForTenant(branchId, tenantId, db);
+  if (!branch) {
+    const error = new Error("Selected branch was not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return branch;
+}
+
+async function assertUserBelongsToTenant(tenantId, userId, db = pool) {
+  if (!userId) {
+    return null;
+  }
+
+  const user = await userRepo.findByIdForTenant(userId, tenantId, db);
+  if (!user) {
+    const error = new Error("Selected linked user was not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return user;
+}
+
 async function listStaff(tenantId, filters) {
   return staffRepo.listStaff(tenantId, filters);
 }
@@ -57,6 +91,8 @@ async function createStaff(tenantId, payload, userId, ipAddress) {
     await connection.beginTransaction();
     const normalized = normalizeStaffPayload(payload);
     await assertDepartmentBelongsToTenant(tenantId, normalized.department_id, connection);
+    await assertBranchBelongsToTenant(tenantId, normalized.branch_id, connection);
+    await assertUserBelongsToTenant(tenantId, normalized.user_id, connection);
 
     normalized.staff_code =
       normalized.staff_code ||
@@ -105,6 +141,8 @@ async function updateStaff(tenantId, id, payload, userId, ipAddress) {
 
     const normalized = normalizeStaffPayload(payload);
     await assertDepartmentBelongsToTenant(tenantId, normalized.department_id, connection);
+    await assertBranchBelongsToTenant(tenantId, normalized.branch_id, connection);
+    await assertUserBelongsToTenant(tenantId, normalized.user_id, connection);
 
     normalized.staff_code =
       normalized.staff_code ||
@@ -112,6 +150,25 @@ async function updateStaff(tenantId, id, payload, userId, ipAddress) {
       (await staffRepo.generateStaffCode(tenantId, normalized.employment_type, connection));
 
     const staff = await staffRepo.updateStaff(tenantId, id, normalized, userId, connection);
+
+    if (String(existing.user_id || "") !== String(normalized.user_id || "")) {
+      await auditLogRepo.create(
+        {
+          tenant_id: tenantId,
+          user_id: userId,
+          action: "staff.user_linked",
+          entity_type: "staff_member",
+          entity_id: String(staff.id),
+          metadata_json: {
+            staff_id: staff.id,
+            staff_code: staff.staff_code,
+            user_id: normalized.user_id || null
+          },
+          ip_address: ipAddress
+        },
+        connection
+      );
+    }
 
     await auditLogRepo.create(
       {

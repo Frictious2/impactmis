@@ -1,0 +1,14 @@
+<%- include("form", {
+  formTitle: `Edit ${report.title}`,
+  formAction: `/activity-reports/${report.id}/edit`,
+  submitLabel: "Save Changes",
+  cancelHref: `/activity-reports/${report.id}`,
+  formData,
+  projects,
+  branches,
+  staffMembers,
+  tasks,
+  reportTypeOptions,
+  statusOptions,
+  validationErrors
+}) %>

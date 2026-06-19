@@ -51,12 +51,30 @@
           <p class="text-muted mb-3">This tenant does not have a license yet.</p>
           <a href="/developer/tenants/<%= tenant.id %>/licenses/new" class="btn btn-primary btn-sm">Issue License</a>
         <% } else { %>
-          <% const enabledModules = typeof currentLicense.modules_json === 'string' ? JSON.parse(currentLicense.modules_json || '[]') : (currentLicense.modules_json || []); %>
+          <%
+            let rawModules = null;
+            let moduleParseFailed = false;
+            try {
+              rawModules = typeof currentLicense.modules_json === 'string'
+                ? JSON.parse(currentLicense.modules_json || '{}')
+                : (currentLicense.modules_json || {});
+            } catch (_) {
+              rawModules = null;
+              moduleParseFailed = true;
+            }
+            const enabledModuleCodes = Array.isArray(rawModules)
+              ? rawModules
+              : rawModules && typeof rawModules === 'object'
+                ? Object.keys(rawModules).filter((code) => ![false, 'false', 0, '0', 'disabled', 'off'].includes(rawModules[code]))
+                : [];
+            const moduleLabels = Object.fromEntries((moduleCatalog || []).map((module) => [module.code, module.label]));
+          %>
           <div class="d-flex flex-wrap gap-2 mb-3">
             <span class="badge rounded-pill <%= currentLicense.status === 'active' ? 'badge-soft-success' : currentLicense.status === 'revoked' ? 'badge-soft-danger' : 'badge-soft-warning' %>">
               <%= currentLicense.status %>
             </span>
             <span class="badge rounded-pill badge-soft-secondary"><%= currentLicense.plan_name %></span>
+            <a href="/developer/tenants/<%= tenant.id %>/licenses/<%= currentLicense.id %>/edit" class="btn btn-sm btn-outline-primary ms-auto">Edit Modules / License</a>
           </div>
           <dl class="row mb-0">
             <dt class="col-sm-5">Starts At</dt>
@@ -69,9 +87,16 @@
             <dd class="col-sm-7"><%= currentLicense.seat_limit %></dd>
             <dt class="col-sm-5">Modules</dt>
             <dd class="col-sm-7">
-              <% enabledModules.forEach((module, index, arr) => { %>
-                <span><%= module %><%= index < arr.length - 1 ? ', ' : '' %></span>
-              <% }) %>
+              <div class="d-flex flex-wrap gap-2">
+                <% if (moduleParseFailed || !rawModules) { %>
+                  <span class="badge rounded-pill badge-soft-warning">No module configuration found</span>
+                <% } else if (!enabledModuleCodes.length) { %>
+                  <span class="text-muted">No modules enabled</span>
+                <% } %>
+                <% enabledModuleCodes.forEach((module) => { %>
+                  <span class="badge rounded-pill badge-soft-primary"><%= moduleLabels[module] || module %></span>
+                <% }) %>
+              </div>
             </dd>
           </dl>
         <% } %>

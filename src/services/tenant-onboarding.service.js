@@ -6,7 +6,9 @@ const userRepo = require("../repos/user.repo");
 const auditLogRepo = require("../repos/audit-log.repo");
 const {
   coerceModules,
+  buildModuleAccessMap,
   calculateLicenseExpiry,
+  formatDateInput,
   normalizeNullable,
   normalizeEmail,
   parseJsonField
@@ -173,6 +175,71 @@ async function issueLicense({ tenantId, actor, ipAddress, payload }) {
   }
 }
 
+async function updateLicense({ tenantId, licenseId, actor, ipAddress, payload }) {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const existing = await licenseRepo.findByIdForTenant(tenantId, licenseId, connection);
+    if (!existing) {
+      const error = new Error("License not found for this tenant.");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const durationMonths = Number(payload.duration_months);
+    const startsAt = formatDateInput(payload.starts_at);
+    const expiresAt = calculateLicenseExpiry(startsAt, durationMonths);
+    const modules = buildModuleAccessMap(coerceModules(payload.modules), { includeMissing: true });
+
+    const license = await licenseRepo.updateForTenant(
+      tenantId,
+      licenseId,
+      {
+        plan_name: payload.plan_name.trim(),
+        duration_months: durationMonths,
+        starts_at: startsAt,
+        expires_at: expiresAt,
+        status: payload.status || "active",
+        modules_json: modules,
+        seat_limit: Number(payload.seat_limit)
+      },
+      connection
+    );
+
+    await auditLogRepo.create(
+      {
+        tenant_id: tenantId,
+        user_id: actor.id,
+        action: "license.updated",
+        entity_type: "license",
+        entity_id: String(licenseId),
+        metadata_json: {
+          tenant_id: tenantId,
+          plan_name: license.plan_name,
+          duration_months: license.duration_months,
+          starts_at: license.starts_at,
+          expires_at: license.expires_at,
+          status: license.status,
+          seat_limit: license.seat_limit,
+          modules_enabled: parseJsonField(license.modules_json, {})
+        },
+        ip_address: ipAddress
+      },
+      connection
+    );
+
+    await connection.commit();
+    return license;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 async function updateTenantStatus({ tenantId, nextStatus, actor, ipAddress }) {
   const connection = await pool.getConnection();
 
@@ -209,10 +276,10 @@ async function updateTenantStatus({ tenantId, nextStatus, actor, ipAddress }) {
 
 async function createLicenseRecord({ connection, tenantId, payload }) {
   const status = payload.status || "active";
-  const startsAt = payload.starts_at;
+  const startsAt = formatDateInput(payload.starts_at);
   const durationMonths = Number(payload.duration_months);
   const expiresAt = calculateLicenseExpiry(startsAt, durationMonths);
-  const modules = coerceModules(payload.modules);
+  const modules = buildModuleAccessMap(coerceModules(payload.modules), { includeMissing: true });
 
   if (status === "active") {
     await licenseRepo.reclassifyPreviousActiveLicenses(tenantId, startsAt, connection);
@@ -236,5 +303,6 @@ async function createLicenseRecord({ connection, tenantId, payload }) {
 module.exports = {
   createTenantOnboarding,
   issueLicense,
+  updateLicense,
   updateTenantStatus
 };

@@ -81,6 +81,29 @@
           <% if (validationMap.department_id) { %><div class="invalid-feedback"><%= validationMap.department_id %></div><% } %>
         </div>
         <div class="col-md-4">
+          <label for="branch_id" class="form-label">Branch</label>
+          <select id="branch_id" name="branch_id" class="form-select <%= validationMap.branch_id ? 'is-invalid' : '' %>">
+            <option value="">Unassigned</option>
+            <% (branches || []).forEach((branch) => { %>
+              <option value="<%= branch.id %>" <%= String(formData.branch_id) === String(branch.id) ? 'selected' : '' %>><%= branch.branch_code %> - <%= branch.name %></option>
+            <% }) %>
+          </select>
+          <% if (validationMap.branch_id) { %><div class="invalid-feedback"><%= validationMap.branch_id %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label for="user_id" class="form-label">Linked User Account</label>
+          <select id="user_id" name="user_id" class="form-select <%= validationMap.user_id ? 'is-invalid' : '' %>">
+            <option value="">Not linked</option>
+            <% (users || []).forEach((user) => { %>
+              <option value="<%= user.id %>" <%= String(formData.user_id) === String(user.id) ? 'selected' : '' %>>
+                <%= user.full_name %> - <%= user.role %>
+              </option>
+            <% }) %>
+          </select>
+          <div class="form-text">Optional. Link Staff/Volunteer users for payroll self-view.</div>
+          <% if (validationMap.user_id) { %><div class="invalid-feedback"><%= validationMap.user_id %></div><% } %>
+        </div>
+        <div class="col-md-4">
           <label for="position_title" class="form-label">Position Title</label>
           <input id="position_title" name="position_title" type="text" class="form-control <%= validationMap.position_title ? 'is-invalid' : '' %>" value="<%= formData.position_title %>" />
           <% if (validationMap.position_title) { %><div class="invalid-feedback"><%= validationMap.position_title %></div><% } %>

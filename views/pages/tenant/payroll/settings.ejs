@@ -1,0 +1,57 @@
+<section class="card border-0 shadow-sm">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+      <div>
+        <h1 class="h4 mb-1">Payroll Settings</h1>
+        <p class="text-muted mb-0">Set the default payroll rules used when generating payroll runs.</p>
+      </div>
+      <a class="btn btn-outline-secondary" href="/payroll/runs">Back to Runs</a>
+    </div>
+
+    <% if (validationErrors && validationErrors.length) { %>
+      <div class="alert alert-danger">
+        <% validationErrors.forEach((error) => { %>
+          <div><%= error.msg %></div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <form method="post" action="/payroll/settings" class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label" for="currency">Currency</label>
+        <input class="form-control" id="currency" name="currency" value="<%= formData.currency %>" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="pay_frequency">Pay Frequency</label>
+        <select class="form-select" id="pay_frequency" name="pay_frequency" required>
+          <% payFrequencyOptions.forEach((option) => { %>
+            <option value="<%= option.value %>" <%= formData.pay_frequency === option.value ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="default_work_days_per_month">Work Days / Month</label>
+        <input class="form-control" id="default_work_days_per_month" name="default_work_days_per_month" type="number" min="1" value="<%= formData.default_work_days_per_month %>" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="default_work_hours_per_day">Work Hours / Day</label>
+        <input class="form-control" id="default_work_hours_per_day" name="default_work_hours_per_day" type="number" min="0" step="0.25" value="<%= formData.default_work_hours_per_day %>" required>
+      </div>
+      <div class="col-md-6">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="overtime_enabled" name="overtime_enabled" <%= formData.overtime_enabled ? 'checked' : '' %>>
+          <label class="form-check-label" for="overtime_enabled">Enable overtime tracking later</label>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="approval_required" name="approval_required" <%= formData.approval_required ? 'checked' : '' %>>
+          <label class="form-check-label" for="approval_required">Payroll approval required</label>
+        </div>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-success" type="submit">Save Settings</button>
+      </div>
+    </form>
+  </div>
+</section>

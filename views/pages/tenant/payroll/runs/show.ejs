@@ -1,0 +1,132 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 mb-1">Payroll Run <%= run.payroll_month %>/<%= run.payroll_year %></h1>
+    <p class="text-muted mb-0"><%= formatDate(run.period_start) %> to <%= formatDate(run.period_end) %></p>
+  </div>
+  <a class="btn btn-outline-secondary" href="/payroll/runs">Back to Runs</a>
+</section>
+
+<section class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm"><div class="card-body">
+      <div class="text-muted small">Status</div>
+      <span class="badge text-bg-<%= statusBadge(run.status) %> text-capitalize"><%= run.status %></span>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm"><div class="card-body">
+      <div class="text-muted small">Gross Total</div>
+      <div class="h5 mb-0">NLe <%= money(totals.gross_total || run.total_gross) %></div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm"><div class="card-body">
+      <div class="text-muted small">Allowances</div>
+      <div class="h5 mb-0">NLe <%= money(totals.allowance_total) %></div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm"><div class="card-body">
+      <div class="text-muted small">Deductions</div>
+      <div class="h5 mb-0">NLe <%= money(totals.deduction_total || run.total_deductions) %></div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm"><div class="card-body">
+      <div class="text-muted small">Net Total</div>
+      <div class="h5 mb-0">NLe <%= money(totals.net_total || run.total_net) %></div>
+    </div></div>
+  </div>
+</section>
+
+<% if (canManagePayroll) { %>
+  <section class="card border-0 shadow-sm mb-4">
+    <div class="card-body d-flex flex-wrap gap-2 align-items-center">
+      <strong class="me-2">Workflow:</strong>
+      <a class="btn btn-outline-secondary" href="/payroll/runs/<%= run.id %>/export.csv">Export CSV</a>
+      <form method="post" action="/payroll/runs/<%= run.id %>/submit">
+        <button class="btn btn-outline-warning" type="submit" <%= run.status !== 'draft' ? 'disabled' : '' %>>Submit</button>
+      </form>
+      <form method="post" action="/payroll/runs/<%= run.id %>/approve">
+        <button class="btn btn-outline-success" type="submit" <%= run.status !== 'submitted' ? 'disabled' : '' %>>Approve</button>
+      </form>
+      <form method="post" action="/payroll/runs/<%= run.id %>/mark-paid">
+        <button class="btn btn-outline-primary" type="submit" <%= run.status !== 'approved' ? 'disabled' : '' %>>Mark Paid</button>
+      </form>
+      <form method="post" action="/payroll/runs/<%= run.id %>/cancel">
+        <button class="btn btn-outline-danger" type="submit" <%= ['cancelled', 'paid'].includes(run.status) ? 'disabled' : '' %>>Cancel</button>
+      </form>
+    </div>
+  </section>
+<% } %>
+
+<section class="card border-0 shadow-sm">
+  <div class="card-body border-bottom">
+    <h2 class="h5 mb-1">Generated Payroll Items</h2>
+    <p class="text-muted mb-0">These items were generated from active staff compensation records.</p>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Staff</th>
+          <th>Department</th>
+          <th>Branch</th>
+          <th>Base</th>
+          <th>Allowances</th>
+          <th>Deductions</th>
+          <th>Gross</th>
+          <th>Net</th>
+          <th>Present</th>
+          <th>Absent</th>
+          <th>Payment</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!items.length) { %>
+          <tr><td colspan="12" class="text-center text-muted py-5">No payroll items were generated. Check that staff compensation records are active.</td></tr>
+        <% } %>
+        <% items.forEach((item) => { %>
+          <tr>
+            <td><strong><%= item.staff_code %></strong><br><span class="text-muted"><%= item.staff_name %></span></td>
+            <td><%= item.department_name || 'Unassigned' %></td>
+            <td><%= item.branch_name || 'Unassigned' %></td>
+            <td>NLe <%= money(item.base_salary) %></td>
+            <td>NLe <%= money(item.allowance_total) %></td>
+            <td>NLe <%= money(item.deduction_total) %></td>
+            <td>NLe <%= money(item.gross_pay) %></td>
+            <td><strong>NLe <%= money(item.net_pay) %></strong></td>
+            <td><%= item.attendance_days_present || 0 %></td>
+            <td><%= item.attendance_days_absent || 0 %></td>
+            <td>
+              <span class="badge text-bg-<%= item.payment_status === 'paid' ? 'success' : 'secondary' %> text-capitalize">
+                <%= item.payment_status || 'unpaid' %>
+              </span>
+              <% if (item.payment_date) { %>
+                <div class="small text-muted"><%= formatDate(item.payment_date) %></div>
+              <% } %>
+            </td>
+            <td class="text-end">
+              <div class="d-flex flex-wrap gap-1 justify-content-end">
+                <a class="btn btn-sm btn-outline-success" href="/payroll/runs/<%= run.id %>/items/<%= item.id %>/payslip">Payslip</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/payroll/runs/<%= run.id %>/items/<%= item.id %>/payslip/print">Print</a>
+                <% if (canManagePayroll && ['approved', 'paid'].includes(run.status)) { %>
+                  <% if (item.payment_status === 'paid') { %>
+                    <form method="post" action="/payroll/runs/<%= run.id %>/items/<%= item.id %>/mark-unpaid">
+                      <button class="btn btn-sm btn-outline-warning" type="submit">Mark Unpaid</button>
+                    </form>
+                  <% } else { %>
+                    <form method="post" action="/payroll/runs/<%= run.id %>/items/<%= item.id %>/mark-paid">
+                      <button class="btn btn-sm btn-outline-primary" type="submit">Mark Paid</button>
+                    </form>
+                  <% } %>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>

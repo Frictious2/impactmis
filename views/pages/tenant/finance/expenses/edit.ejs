@@ -1,0 +1,12 @@
+<%- include("form", {
+  formTitle: `Edit ${expense.expense_code}`,
+  formAction: `/expenses/${expense.id}/edit`,
+  submitLabel: "Save Expense",
+  cancelHref: `/expenses/${expense.id}`,
+  formData,
+  projects,
+  branches,
+  categories,
+  paymentMethodOptions,
+  validationErrors
+}) %>

@@ -1,0 +1,60 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 mb-1">My Payroll</h1>
+    <p class="text-muted mb-0">View your payroll history and payslips.</p>
+  </div>
+</section>
+
+<% if (!staffMember) { %>
+  <section class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+      <h2 class="h5">No linked staff record</h2>
+      <p class="text-muted mb-0">Your user account has not been linked to a staff or volunteer profile yet.</p>
+    </div>
+  </section>
+<% } else { %>
+  <section class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <div class="text-muted small">Linked Staff Profile</div>
+      <div class="fw-semibold"><%= staffMember.full_name %> · <%= staffMember.staff_code %></div>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Month / Year</th>
+            <th>Gross Pay</th>
+            <th>Deductions</th>
+            <th>Net Pay</th>
+            <th>Payment Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (!items.length) { %>
+            <tr><td colspan="6" class="text-center text-muted py-5">No payroll history is available yet.</td></tr>
+          <% } %>
+          <% items.forEach((item) => { %>
+            <tr>
+              <td><%= item.payroll_month %>/<%= item.payroll_year %></td>
+              <td>NLe <%= money(item.gross_pay) %></td>
+              <td>NLe <%= money(item.deduction_total) %></td>
+              <td><strong>NLe <%= money(item.net_pay) %></strong></td>
+              <td>
+                <span class="badge text-bg-<%= item.payment_status === 'paid' ? 'success' : 'secondary' %> text-capitalize">
+                  <%= item.payment_status || 'unpaid' %>
+                </span>
+              </td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-success" href="/my/payroll/runs/<%= item.payroll_run_id %>/items/<%= item.id %>/payslip">View Payslip</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% } %>

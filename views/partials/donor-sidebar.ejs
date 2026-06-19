@@ -1,0 +1,14 @@
+<div class="p-3">
+  <div class="mb-4">
+    <div class="text-uppercase small text-info-emphasis">ImpactMIS</div>
+    <h4 class="mb-0"><%= currentTenant ? currentTenant.name : 'Donor Portal' %></h4>
+  </div>
+
+  <nav class="nav flex-column gap-1">
+    <a class="nav-link sidebar-link text-dark <%= currentPath === '/donor/dashboard' ? 'active' : '' %>" href="/donor/dashboard">Dashboard</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/donor/projects') ? 'active' : '' %>" href="/donor/projects">Projects</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/donor/activity-reports') ? 'active' : '' %>" href="/donor/activity-reports">Activity Reports</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/donor/indicators') ? 'active' : '' %>" href="/donor/indicators">Indicators</a>
+    <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/donor/beneficiaries') ? 'active' : '' %>" href="/donor/beneficiaries">Beneficiaries</a>
+  </nav>
+</div>

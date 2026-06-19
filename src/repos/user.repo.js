@@ -97,6 +97,42 @@ async function listByTenantId(tenantId) {
   return rows;
 }
 
+async function listActiveByTenantId(tenantId) {
+  const [rows] = await pool.query(
+    `
+      SELECT
+        u.id,
+        u.full_name,
+        u.email,
+        u.role,
+        u.status,
+        u.user_type
+      FROM users u
+      WHERE u.tenant_id = ?
+        AND u.status = 'active'
+      ORDER BY u.full_name ASC, u.id ASC
+    `,
+    [tenantId]
+  );
+
+  return rows;
+}
+
+async function findByIdForTenant(id, tenantId, db = pool) {
+  const [rows] = await db.query(
+    `
+      SELECT *
+      FROM users
+      WHERE id = ?
+        AND tenant_id = ?
+      LIMIT 1
+    `,
+    [id, tenantId]
+  );
+
+  return rows[0] || null;
+}
+
 async function create(payload, db = pool) {
   const [result] = await db.query(
     `
@@ -150,13 +186,23 @@ async function updateLastLogin(id) {
   await pool.query("UPDATE users SET last_login_at = NOW() WHERE id = ?", [id]);
 }
 
+async function updatePassword(id, passwordHash, db = pool) {
+  await db.query(
+    "UPDATE users SET password_hash = ?, must_change_password = 0, updated_at = NOW() WHERE id = ?",
+    [passwordHash, id]
+  );
+}
+
 module.exports = {
   findById,
   findByEmailCandidates,
   listAdminUsersByTenantId,
   listByTenantId,
+  listActiveByTenantId,
+  findByIdForTenant,
   existsByEmailForTenant,
   create,
   countActiveByTenantId,
-  updateLastLogin
+  updateLastLogin,
+  updatePassword
 };

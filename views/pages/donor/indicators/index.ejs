@@ -1,0 +1,64 @@
+<section class="card border-0 shadow-sm">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Indicators</h1>
+        <p class="text-muted mb-0">Project indicators for active and completed projects.</p>
+      </div>
+    </div>
+
+    <form action="/donor/indicators" method="GET" class="row g-3 mb-4">
+      <div class="col-md-4">
+        <label for="project_id" class="form-label">Project</label>
+        <select id="project_id" name="project_id" class="form-select">
+          <option value="">All projects</option>
+          <% projects.forEach((project) => { %>
+            <option value="<%= project.id %>" <%= String(filters.project_id) === String(project.id) ? 'selected' : '' %>><%= project.project_code %> - <%= project.project_name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-4 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="/donor/indicators" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+
+    <% if (!indicators.length) { %>
+      <p class="text-muted mb-0">No indicators are available yet.</p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Project</th>
+              <th>Indicator</th>
+              <th>Target</th>
+              <th>Current</th>
+              <th>Unit</th>
+              <th>Progress</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% indicators.forEach((indicator) => { %>
+              <% const progress = Number(indicator.target_value) > 0 ? Math.min(100, Math.round((Number(indicator.current_value) / Number(indicator.target_value)) * 100)) : 0; %>
+              <tr>
+                <td><%= indicator.project_code %> - <%= indicator.project_name %></td>
+                <td class="fw-semibold"><%= indicator.indicator_name %></td>
+                <td><%= indicator.target_value %></td>
+                <td><%= indicator.current_value %></td>
+                <td><%= indicator.unit || 'N/A' %></td>
+                <td style="min-width: 180px;">
+                  <div class="progress" role="progressbar" aria-valuenow="<%= progress %>" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar bg-success" style="width: <%= progress %>%"><%= progress %>%</div>
+                  </div>
+                </td>
+                <td><span class="badge rounded-pill <%= indicator.status === 'active' ? 'badge-soft-success' : 'badge-soft-secondary' %>"><%= indicator.status %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</section>

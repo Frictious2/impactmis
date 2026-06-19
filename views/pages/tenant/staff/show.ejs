@@ -27,6 +27,8 @@
           <dd class="col-sm-7"><%= staffMember.date_of_birth ? new Date(staffMember.date_of_birth).toLocaleDateString() : 'Not set' %></dd>
           <dt class="col-sm-5">Department</dt>
           <dd class="col-sm-7"><%= staffMember.department_name || 'Unassigned' %></dd>
+          <dt class="col-sm-5">Branch</dt>
+          <dd class="col-sm-7"><%= staffMember.branch_name || 'Unassigned' %></dd>
         </dl>
       </div>
     </section>

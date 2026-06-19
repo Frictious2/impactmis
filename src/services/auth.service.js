@@ -42,6 +42,23 @@ async function authenticate(email, password) {
   return { ok: true, user: tenantMatch };
 }
 
+async function changePassword(userId, currentPassword, nextPassword) {
+  const user = await userRepo.findById(userId);
+  if (!user || user.status !== "active") {
+    return { ok: false, message: "User account is not available." };
+  }
+
+  const valid = await bcrypt.compare(currentPassword, user.password_hash);
+  if (!valid) {
+    return { ok: false, message: "Current password is incorrect." };
+  }
+
+  const passwordHash = await bcrypt.hash(nextPassword, 12);
+  await userRepo.updatePassword(userId, passwordHash);
+  return { ok: true };
+}
+
 module.exports = {
-  authenticate
+  authenticate,
+  changePassword
 };

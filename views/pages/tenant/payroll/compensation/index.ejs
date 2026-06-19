@@ -1,0 +1,52 @@
+<section class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h4 mb-1">Payroll Compensation</h1>
+    <p class="text-muted mb-0">Set base pay, allowances, and deductions for active payroll staff.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/payroll/allowance-types">Allowance Types</a>
+    <a class="btn btn-outline-secondary" href="/payroll/deduction-types">Deduction Types</a>
+  </div>
+</section>
+
+<section class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Staff Code</th>
+          <th>Staff Name</th>
+          <th>Department</th>
+          <th>Branch</th>
+          <th>Base Salary</th>
+          <th>Pay Type</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!rows.length) { %>
+          <tr><td colspan="8" class="text-center text-muted py-5">No staff records are available for payroll setup.</td></tr>
+        <% } %>
+        <% rows.forEach((row) => { %>
+          <tr>
+            <td><%= row.staff_code %></td>
+            <td><%= row.staff_name %></td>
+            <td><%= row.department_name || 'Unassigned' %></td>
+            <td><%= row.branch_name || 'Unassigned' %></td>
+            <td><%= row.base_salary !== null ? `${row.currency || 'NLe'} ${money(row.base_salary)}` : 'Not set' %></td>
+            <td class="text-capitalize"><%= row.pay_type || 'Not set' %></td>
+            <td>
+              <span class="badge text-bg-<%= row.compensation_status === 'active' ? 'success' : 'secondary' %>">
+                <%= row.compensation_status || 'Not configured' %>
+              </span>
+            </td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-success" href="/payroll/compensation/<%= row.staff_member_id %>">Setup</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>

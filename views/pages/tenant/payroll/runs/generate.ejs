@@ -1,0 +1,44 @@
+<section class="card border-0 shadow-sm">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+      <div>
+        <h1 class="h4 mb-1">Generate Payroll Run</h1>
+        <p class="text-muted mb-0">Create generated payroll items from active staff compensation, allowances, and deductions.</p>
+      </div>
+      <a class="btn btn-outline-secondary" href="/payroll/runs">Back to Runs</a>
+    </div>
+
+    <div class="alert alert-warning">
+      Payroll calculations are based on active compensation, allowances, and deductions. Attendance is shown for reference only in this phase.
+      Payroll items are generated automatically when this payroll run is created and can be reviewed from the payroll run detail page.
+    </div>
+
+    <% if (validationErrors && validationErrors.length) { %>
+      <div class="alert alert-danger">
+        <% validationErrors.forEach((error) => { %><div><%= error.msg %></div><% }) %>
+      </div>
+    <% } %>
+
+    <form method="post" action="/payroll/runs/generate" class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label" for="payroll_month">Month</label>
+        <input class="form-control" id="payroll_month" name="payroll_month" type="number" min="1" max="12" value="<%= formData.payroll_month %>" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="payroll_year">Year</label>
+        <input class="form-control" id="payroll_year" name="payroll_year" type="number" min="2020" max="2100" value="<%= formData.payroll_year %>" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="period_start">Period Start</label>
+        <input class="form-control" id="period_start" name="period_start" type="date" value="<%= formData.period_start %>" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="period_end">Period End</label>
+        <input class="form-control" id="period_end" name="period_end" type="date" value="<%= formData.period_end %>" required>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-success" type="submit">Generate Payroll Run</button>
+      </div>
+    </form>
+  </div>
+</section>

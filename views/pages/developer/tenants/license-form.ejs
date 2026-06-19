@@ -1,13 +1,13 @@
 <% const validationMap = {}; %>
 <% validationErrors.forEach((error) => { validationMap[error.path] = error.msg; }); %>
 
-<form action="/developer/tenants/<%= tenant.id %>/licenses" method="POST" class="d-flex flex-column gap-4">
+<form action="<%= formAction || `/developer/tenants/${tenant.id}/licenses` %>" method="POST" class="d-flex flex-column gap-4">
   <section class="card section-card">
     <div class="card-body">
       <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
         <div>
-          <h1 class="h4 mb-1">Issue / Renew License</h1>
-          <p class="text-muted mb-0">Create a new license for <strong><%= tenant.name %></strong>.</p>
+          <h1 class="h4 mb-1"><%= formTitle || 'Issue / Renew License' %></h1>
+          <p class="text-muted mb-0"><%= formDescription || `Create a new license for ${tenant.name}.` %></p>
         </div>
         <div>
           <a href="/developer/tenants/<%= tenant.id %>" class="btn btn-outline-secondary">Back to Tenant</a>

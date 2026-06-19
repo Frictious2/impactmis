@@ -1,0 +1,16 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 mb-1">Sent Messages</h1>
+    <p class="text-muted mb-0">Messages you have sent.</p>
+  </div>
+  <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="/messages">Inbox</a><% if (currentUser.role !== 'Donor') { %><a class="btn btn-success" href="/messages/create">Compose</a><% } %></div>
+</section>
+<section class="card border-0 shadow-sm">
+  <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+    <thead class="table-light"><tr><th>Recipient</th><th>Subject</th><th>Date</th><th class="text-end">Action</th></tr></thead>
+    <tbody>
+      <% if (!messages.length) { %><tr><td colspan="4" class="text-center text-muted py-5">No sent messages.</td></tr><% } %>
+      <% messages.forEach((message) => { %><tr><td><%= message.recipient_name %> <span class="text-muted">(<%= message.recipient_role %>)</span></td><td><%= message.subject %></td><td><%= new Date(message.created_at).toLocaleString() %></td><td class="text-end"><a class="btn btn-sm btn-outline-success" href="/messages/<%= message.id %>">Open</a></td></tr><% }) %>
+    </tbody>
+  </table></div>
+</section>

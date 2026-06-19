@@ -1,0 +1,74 @@
+<% const validationMap = {}; %>
+<% (validationErrors || []).forEach((error) => { validationMap[error.path] = error.msg; }); %>
+
+<form action="<%= formAction %>" method="POST" class="card section-card">
+  <div class="card-body">
+    <h1 class="h4 mb-3"><%= formTitle %></h1>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label for="branch_code" class="form-label">Branch Code</label>
+        <input id="branch_code" name="branch_code" type="text" class="form-control <%= validationMap.branch_code ? 'is-invalid' : '' %>" value="<%= formData.branch_code %>" />
+        <% if (validationMap.branch_code) { %><div class="invalid-feedback"><%= validationMap.branch_code %></div><% } %>
+      </div>
+      <div class="col-md-8">
+        <label for="name" class="form-label">Branch Name</label>
+        <input id="name" name="name" type="text" class="form-control <%= validationMap.name ? 'is-invalid' : '' %>" value="<%= formData.name %>" />
+        <% if (validationMap.name) { %><div class="invalid-feedback"><%= validationMap.name %></div><% } %>
+      </div>
+      <div class="col-md-8">
+        <label for="address" class="form-label">Address</label>
+        <input id="address" name="address" type="text" class="form-control <%= validationMap.address ? 'is-invalid' : '' %>" value="<%= formData.address %>" />
+        <% if (validationMap.address) { %><div class="invalid-feedback"><%= validationMap.address %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="district" class="form-label">District</label>
+        <input id="district" name="district" type="text" class="form-control" value="<%= formData.district %>" />
+      </div>
+      <div class="col-md-4">
+        <label for="city" class="form-label">City</label>
+        <input id="city" name="city" type="text" class="form-control" value="<%= formData.city %>" />
+      </div>
+      <div class="col-md-4">
+        <label for="country" class="form-label">Country</label>
+        <input id="country" name="country" type="text" class="form-control" value="<%= formData.country %>" />
+      </div>
+      <div class="col-md-4">
+        <label for="geofence_radius_meters" class="form-label">Geofence Radius (m)</label>
+        <input id="geofence_radius_meters" name="geofence_radius_meters" type="number" min="10" class="form-control <%= validationMap.geofence_radius_meters ? 'is-invalid' : '' %>" value="<%= formData.geofence_radius_meters %>" />
+        <% if (validationMap.geofence_radius_meters) { %><div class="invalid-feedback"><%= validationMap.geofence_radius_meters %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="latitude" class="form-label">Latitude</label>
+        <input id="latitude" name="latitude" type="number" step="0.00000001" class="form-control <%= validationMap.latitude ? 'is-invalid' : '' %>" value="<%= formData.latitude %>" />
+        <% if (validationMap.latitude) { %><div class="invalid-feedback"><%= validationMap.latitude %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="longitude" class="form-label">Longitude</label>
+        <input id="longitude" name="longitude" type="number" step="0.00000001" class="form-control <%= validationMap.longitude ? 'is-invalid' : '' %>" value="<%= formData.longitude %>" />
+        <% if (validationMap.longitude) { %><div class="invalid-feedback"><%= validationMap.longitude %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="contact_name" class="form-label">Contact Name</label>
+        <input id="contact_name" name="contact_name" type="text" class="form-control" value="<%= formData.contact_name %>" />
+      </div>
+      <div class="col-md-4">
+        <label for="contact_phone" class="form-label">Contact Phone</label>
+        <input id="contact_phone" name="contact_phone" type="text" class="form-control <%= validationMap.contact_phone ? 'is-invalid' : '' %>" value="<%= formData.contact_phone %>" />
+        <% if (validationMap.contact_phone) { %><div class="invalid-feedback"><%= validationMap.contact_phone %></div><% } %>
+      </div>
+      <div class="col-md-4">
+        <label for="status" class="form-label">Status</label>
+        <select id="status" name="status" class="form-select <%= validationMap.status ? 'is-invalid' : '' %>">
+          <% statusOptions.forEach((option) => { %>
+            <option value="<%= option.value %>" <%= formData.status === option.value ? 'selected' : '' %>><%= option.label %></option>
+          <% }) %>
+        </select>
+        <% if (validationMap.status) { %><div class="invalid-feedback"><%= validationMap.status %></div><% } %>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer bg-white border-0 pt-0 pb-4 px-4">
+    <button type="submit" class="btn btn-primary"><%= submitLabel %></button>
+    <a href="<%= cancelHref %>" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
