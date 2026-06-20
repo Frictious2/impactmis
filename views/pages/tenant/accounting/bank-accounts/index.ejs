@@ -1,0 +1,19 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div><h1 class="h4 mb-1">Bank Accounts</h1><p class="text-muted mb-0">Link organizational bank accounts to asset accounts in the chart of accounts.</p></div>
+  <a class="btn btn-success" href="/accounting/bank-accounts/create">Create Bank Account</a>
+</section>
+<section class="card border-0 shadow-sm"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+  <thead class="table-light"><tr><th>Account</th><th>Bank</th><th>Currency</th><th>Linked GL</th><th>Opening Balance</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+  <tbody>
+    <% if (!bankAccounts.length) { %><tr><td colspan="7" class="text-center text-muted py-5">No bank accounts yet.</td></tr><% } %>
+    <% bankAccounts.forEach((account) => { %><tr>
+      <td class="fw-semibold"><%= account.account_name %></td>
+      <td><%= account.bank_name %></td>
+      <td><%= account.currency %></td>
+      <td><%= account.gl_account_code ? `${account.gl_account_code} - ${account.gl_account_name}` : 'Not linked' %></td>
+      <td><%= money(account.opening_balance) %></td>
+      <td><span class="badge text-bg-<%= statusBadge(account.status) %>"><%= account.status %></span></td>
+      <td class="text-end"><a class="btn btn-sm btn-outline-success" href="/accounting/bank-accounts/<%= account.id %>/edit">Edit</a></td>
+    </tr><% }) %>
+  </tbody>
+</table></div></section>

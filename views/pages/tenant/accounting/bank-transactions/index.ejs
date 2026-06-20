@@ -1,0 +1,27 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div><h1 class="h4 mb-1">Bank Transactions</h1><p class="text-muted mb-0">Post deposits, withdrawals, and transfers into linked journal entries.</p></div>
+  <a class="btn btn-success" href="/accounting/bank-transactions/create">Create Transaction</a>
+</section>
+<section class="card border-0 shadow-sm mb-4"><div class="card-body"><form class="row g-2">
+  <div class="col-md-3"><select class="form-select" name="bank_account_id"><option value="">All accounts</option><% bankAccounts.forEach((account) => { %><option value="<%= account.id %>" <%= String(filters.bank_account_id) === String(account.id) ? 'selected' : '' %>><%= account.account_name %></option><% }) %></select></div>
+  <div class="col-md-2"><select class="form-select" name="transaction_type"><option value="">All types</option><% transactionTypes.forEach((type) => { %><option value="<%= type.value %>" <%= filters.transaction_type === type.value ? 'selected' : '' %>><%= type.label %></option><% }) %></select></div>
+  <div class="col-md-2"><select class="form-select" name="status"><option value="">All statuses</option><% journalStatusOptions.forEach((status) => { %><option value="<%= status.value %>" <%= filters.status === status.value ? 'selected' : '' %>><%= status.label %></option><% }) %></select></div>
+  <div class="col-md-2"><input class="form-control" type="date" name="date_from" value="<%= filters.date_from %>"></div>
+  <div class="col-md-2"><button class="btn btn-outline-success w-100" type="submit">Filter</button></div>
+</form></div></section>
+<section class="card border-0 shadow-sm"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+  <thead class="table-light"><tr><th>Date</th><th>Bank Account</th><th>Type</th><th>Description</th><th>Amount</th><th>Status</th><th>Journal</th><th class="text-end">Actions</th></tr></thead>
+  <tbody>
+    <% if (!transactions.length) { %><tr><td colspan="8" class="text-center text-muted py-5">No bank transactions found.</td></tr><% } %>
+    <% transactions.forEach((transaction) => { %><tr>
+      <td><%= formatDate(transaction.transaction_date) %></td>
+      <td><%= transaction.bank_account_name %></td>
+      <td><span class="badge text-bg-<%= statusBadge(transaction.transaction_type) %>"><%= transaction.transaction_type %></span></td>
+      <td><%= transaction.description %></td>
+      <td><%= money(transaction.amount) %></td>
+      <td><span class="badge text-bg-<%= statusBadge(transaction.status) %>"><%= transaction.status %></span></td>
+      <td><%= transaction.journal_number || 'Not posted' %></td>
+      <td class="text-end"><a class="btn btn-sm btn-outline-success" href="/accounting/bank-transactions/<%= transaction.id %>">View</a></td>
+    </tr><% }) %>
+  </tbody>
+</table></div></section>

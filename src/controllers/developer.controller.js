@@ -349,6 +349,30 @@ function placeholder(pageTitle, heading, description, breadcrumbLabel) {
     });
 }
 
+async function auditLogs(req, res, next) {
+  try {
+    const filters = {
+      tenant_id: req.query.tenant_id || "",
+      action: req.query.action || ""
+    };
+    const [logs, tenantsList] = await Promise.all([
+      auditLogRepo.listDeveloperAuditLogs(filters, 200),
+      tenantRepo.listForDeveloper({})
+    ]);
+
+    return res.render("layouts/developer-layout", {
+      pageTitle: "System / Developer Audit Logs",
+      contentPartial: "../pages/developer/audit-logs",
+      breadcrumbs: [{ label: "Dashboard", href: "/developer/dashboard" }, { label: "Audit Logs" }],
+      logs,
+      tenants: tenantsList,
+      filters
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   dashboard,
   tenants,
@@ -373,12 +397,7 @@ module.exports = {
     "System-wide user administration will be implemented in a future phase.",
     "Users"
   ),
-  auditLogs: placeholder(
-    "Audit Logs",
-    "Audit Logs",
-    "The dedicated system audit trail viewer will be implemented in a future phase.",
-    "Audit Logs"
-  ),
+  auditLogs,
   settings: placeholder(
     "Settings",
     "Settings",

@@ -1,0 +1,47 @@
+<section class="card section-card">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Database Backups</h1>
+        <p class="text-muted mb-0">Create, download, and clean up MySQL dump files stored in the configured backup directory.</p>
+      </div>
+      <form method="post" action="/developer/backups/create">
+        <button class="btn btn-primary" type="submit">Create Backup</button>
+      </form>
+    </div>
+
+    <% if (!backups.length) { %>
+      <p class="text-muted mb-0">No backups found.</p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Filename</th>
+              <th>Size</th>
+              <th>Created</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% backups.forEach((backup) => { %>
+              <tr>
+                <td><code><%= backup.filename %></code></td>
+                <td><%= formatBytes(backup.size) %></td>
+                <td><%= new Date(backup.created_at).toLocaleString() %></td>
+                <td class="text-end">
+                  <div class="d-flex gap-2 justify-content-end">
+                    <a class="btn btn-sm btn-outline-primary" href="/developer/backups/<%= backup.filename %>/download">Download</a>
+                    <form method="post" action="/developer/backups/<%= backup.filename %>/delete">
+                      <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</section>

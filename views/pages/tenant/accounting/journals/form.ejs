@@ -1,0 +1,64 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div><h1 class="h4 mb-1"><%= journal.id ? 'Edit Journal Entry' : 'Create Journal Entry' %></h1><p class="text-muted mb-0">Every journal must balance before it can be saved and posted.</p></div>
+  <a class="btn btn-outline-secondary" href="/accounting/journals">Back to Journals</a>
+</section>
+
+<section class="card border-0 shadow-sm"><div class="card-body">
+  <form method="post" action="<%= formAction %>" id="journalForm">
+    <div class="row g-3 mb-4">
+      <div class="col-md-3"><label class="form-label">Journal Date</label><input class="form-control" type="date" name="journal_date" value="<%= formatDate(journal.journal_date) %>" required></div>
+      <div class="col-md-9"><label class="form-label">Description</label><input class="form-control" name="description" value="<%= journal.description || '' %>" required></div>
+    </div>
+    <div class="table-responsive">
+      <table class="table align-middle" id="journalLines">
+        <thead class="table-light"><tr><th>Account</th><th>Description</th><th>Debit</th><th>Credit</th><th>Project</th><th>Branch</th><th></th></tr></thead>
+        <tbody>
+          <% (lines || [{}, {}]).forEach((line, index) => { %>
+            <tr>
+              <td><select class="form-select" name="lines[<%= index %>][account_id]" required><option value="">Select</option><% accounts.forEach((account) => { %><option value="<%= account.id %>" <%= String(line.account_id || '') === String(account.id) ? 'selected' : '' %>><%= account.account_code %> - <%= account.account_name %></option><% }) %></select></td>
+              <td><input class="form-control" name="lines[<%= index %>][description]" value="<%= line.description || '' %>"></td>
+              <td><input class="form-control amount debit" type="number" step="0.01" min="0" name="lines[<%= index %>][debit]" value="<%= line.debit || '' %>"></td>
+              <td><input class="form-control amount credit" type="number" step="0.01" min="0" name="lines[<%= index %>][credit]" value="<%= line.credit || '' %>"></td>
+              <td><select class="form-select" name="lines[<%= index %>][project_id]"><option value="">None</option><% projects.forEach((project) => { %><option value="<%= project.id %>" <%= String(line.project_id || '') === String(project.id) ? 'selected' : '' %>><%= project.project_code %></option><% }) %></select></td>
+              <td><select class="form-select" name="lines[<%= index %>][branch_id]"><option value="">None</option><% branches.forEach((branch) => { %><option value="<%= branch.id %>" <%= String(line.branch_id || '') === String(branch.id) ? 'selected' : '' %>><%= branch.name %></option><% }) %></select></td>
+              <td><button class="btn btn-outline-danger btn-sm remove-line" type="button">Remove</button></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+      <button class="btn btn-outline-secondary" type="button" id="addLine">Add Line</button>
+      <div class="text-end">
+        <div class="fw-semibold">Debit: <span id="debitTotal">0.00</span> | Credit: <span id="creditTotal">0.00</span></div>
+        <button class="btn btn-success mt-2" type="submit"><%= journal.id ? 'Save Journal' : 'Create Journal' %></button>
+      </div>
+    </div>
+  </form>
+</div></section>
+
+<script>
+  (() => {
+    const tbody = document.querySelector("#journalLines tbody");
+    const accounts = `<option value="">Select</option><% accounts.forEach((account) => { %><option value="<%= account.id %>"><%= account.account_code %> - <%= account.account_name %></option><% }) %>`;
+    const projects = `<option value="">None</option><% projects.forEach((project) => { %><option value="<%= project.id %>"><%= project.project_code %></option><% }) %>`;
+    const branches = `<option value="">None</option><% branches.forEach((branch) => { %><option value="<%= branch.id %>"><%= branch.name %></option><% }) %>`;
+    function renumber() {
+      [...tbody.querySelectorAll("tr")].forEach((row, index) => {
+        row.querySelectorAll("[name]").forEach((input) => input.name = input.name.replace(/lines\\[\\d+\\]/, `lines[${index}]`));
+      });
+    }
+    function totals() {
+      const sum = (selector) => [...tbody.querySelectorAll(selector)].reduce((total, input) => total + Number(input.value || 0), 0);
+      document.getElementById("debitTotal").textContent = sum(".debit").toFixed(2);
+      document.getElementById("creditTotal").textContent = sum(".credit").toFixed(2);
+    }
+    document.getElementById("addLine").addEventListener("click", () => {
+      const index = tbody.querySelectorAll("tr").length;
+      tbody.insertAdjacentHTML("beforeend", `<tr><td><select class="form-select" name="lines[${index}][account_id]" required>${accounts}</select></td><td><input class="form-control" name="lines[${index}][description]"></td><td><input class="form-control amount debit" type="number" step="0.01" min="0" name="lines[${index}][debit]"></td><td><input class="form-control amount credit" type="number" step="0.01" min="0" name="lines[${index}][credit]"></td><td><select class="form-select" name="lines[${index}][project_id]">${projects}</select></td><td><select class="form-select" name="lines[${index}][branch_id]">${branches}</select></td><td><button class="btn btn-outline-danger btn-sm remove-line" type="button">Remove</button></td></tr>`);
+    });
+    tbody.addEventListener("click", (event) => { if (event.target.classList.contains("remove-line")) { event.target.closest("tr").remove(); renumber(); totals(); } });
+    tbody.addEventListener("input", totals);
+    totals();
+  })();
+</script>

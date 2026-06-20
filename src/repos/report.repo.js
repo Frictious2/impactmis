@@ -330,6 +330,81 @@ async function budgetUtilization(tenantId, filters = {}, db = pool) {
   return rows;
 }
 
+async function logframeProgress(tenantId, filters = {}, db = pool) {
+  const params = [tenantId];
+  const where = ["lf.tenant_id = ?"];
+  if (filters.project_id) {
+    where.push("lf.project_id = ?");
+    params.push(filters.project_id);
+  }
+  if (filters.status) {
+    where.push("lf.status = ?");
+    params.push(filters.status);
+  }
+  const [rows] = await db.query(
+    `
+      SELECT p.project_code, p.project_name, lf.title AS logframe_title, lf.status,
+             COUNT(DISTINCT lo.id) AS outcomes,
+             COUNT(DISTINCT op.id) AS outputs,
+             COUNT(DISTINCT la.id) AS activities,
+             SUM(la.status = 'completed') AS completed_activities
+      FROM logframes lf
+      INNER JOIN projects p ON p.id = lf.project_id AND p.tenant_id = lf.tenant_id
+      LEFT JOIN logframe_outcomes lo ON lo.logframe_id = lf.id AND lo.tenant_id = lf.tenant_id
+      LEFT JOIN logframe_outputs op ON op.outcome_id = lo.id AND op.tenant_id = lo.tenant_id
+      LEFT JOIN logframe_activities la ON la.output_id = op.id AND la.tenant_id = op.tenant_id
+      WHERE ${where.join(" AND ")}
+      GROUP BY lf.id, p.project_code, p.project_name, lf.title, lf.status
+      ORDER BY p.project_name ASC
+    `,
+    params
+  );
+  return rows.map((row) => ({
+    ...row,
+    completion_percentage: Number(row.activities || 0)
+      ? Math.round((Number(row.completed_activities || 0) / Number(row.activities || 0)) * 100)
+      : 0
+  }));
+}
+
+async function surveySummary(tenantId, filters = {}, db = pool) {
+  const params = [tenantId];
+  const where = ["sf.tenant_id = ?"];
+  if (filters.project_id) {
+    where.push("sf.project_id = ?");
+    params.push(filters.project_id);
+  }
+  if (filters.status) {
+    where.push("sf.status = ?");
+    params.push(filters.status);
+  }
+  if (filters.date_from) {
+    where.push("sr.submitted_at >= ?");
+    params.push(filters.date_from);
+  }
+  if (filters.date_to) {
+    where.push("sr.submitted_at <= ?");
+    params.push(filters.date_to);
+  }
+  const [rows] = await db.query(
+    `
+      SELECT sf.title AS survey_title, p.project_name AS project, sf.status,
+             COUNT(DISTINCT sq.id) AS questions,
+             COUNT(DISTINCT sr.id) AS responses,
+             MAX(sr.submitted_at) AS latest_response_at
+      FROM survey_forms sf
+      LEFT JOIN projects p ON p.id = sf.project_id AND p.tenant_id = sf.tenant_id
+      LEFT JOIN survey_questions sq ON sq.survey_form_id = sf.id AND sq.tenant_id = sf.tenant_id
+      LEFT JOIN survey_responses sr ON sr.survey_form_id = sf.id AND sr.tenant_id = sf.tenant_id
+      WHERE ${where.join(" AND ")}
+      GROUP BY sf.id, sf.title, p.project_name, sf.status
+      ORDER BY sf.created_at DESC
+    `,
+    params
+  );
+  return rows;
+}
+
 module.exports = {
   staffRegister,
   attendanceSummary,
@@ -340,5 +415,7 @@ module.exports = {
   indicatorProgress,
   payrollSummary,
   expenseRegister,
-  budgetUtilization
+  budgetUtilization,
+  logframeProgress,
+  surveySummary
 };

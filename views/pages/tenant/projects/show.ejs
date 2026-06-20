@@ -8,6 +8,7 @@
     </div>
   </div>
   <div class="d-flex gap-2">
+    <a href="/projects/<%= project.id %>/logframe" class="btn btn-outline-success">LogFrame</a>
     <a href="/projects/<%= project.id %>/budgets" class="btn btn-outline-success">Budgets</a>
     <a href="/projects/<%= project.id %>/edit" class="btn btn-primary">Edit</a>
     <a href="/projects" class="btn btn-outline-secondary">Back to List</a>
@@ -139,6 +140,7 @@
                         <div class="progress mt-2" style="width: 180px;">
                           <div class="progress-bar" role="progressbar" style="width: <%= progress %>%;" aria-valuenow="<%= progress %>" aria-valuemin="0" aria-valuemax="100"><%= progress %>%</div>
                         </div>
+                        <a class="btn btn-sm btn-outline-success mt-2" href="/indicators/<%= indicator.id %>/measurements">Measurements</a>
                       </div>
                     </div>
                     <% if (indicator.description) { %><p class="text-muted"><%= indicator.description %></p><% } %>

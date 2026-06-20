@@ -1,0 +1,64 @@
+<section class="mb-4">
+  <h1 class="h4 mb-1">Diagnostics</h1>
+  <p class="text-muted mb-0">Safe production health details for Developer users. Secrets are not displayed.</p>
+</section>
+
+<section class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm"><div class="card-body">
+      <div class="text-muted small">Environment</div>
+      <div class="h5 mb-0"><%= diagnostics.app_env %></div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm"><div class="card-body">
+      <div class="text-muted small">Database</div>
+      <span class="badge text-bg-<%= diagnostics.database.connected ? 'success' : 'danger' %>"><%= diagnostics.database.connected ? 'Connected' : 'Failed' %></span>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm"><div class="card-body">
+      <div class="text-muted small">Uptime</div>
+      <div class="h5 mb-0"><%= diagnostics.uptime_seconds %>s</div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm"><div class="card-body">
+      <div class="text-muted small">Node</div>
+      <div class="h5 mb-0"><%= diagnostics.node_version %></div>
+    </div></div>
+  </div>
+</section>
+
+<section class="row g-3">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5">Storage</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Uploads</dt>
+          <dd class="col-sm-7"><%= diagnostics.storage.upload.path %> - <%= diagnostics.storage.upload.writable ? 'Writable' : 'Not writable' %></dd>
+          <dt class="col-sm-5">Backups</dt>
+          <dd class="col-sm-7"><%= diagnostics.storage.backup.path %> - <%= diagnostics.storage.backup.writable ? 'Writable' : 'Not writable' %></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5">Migrations</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Schema Table</dt>
+          <dd class="col-sm-7"><%= diagnostics.migrations.table_present ? 'Present' : 'Missing' %></dd>
+          <dt class="col-sm-5">Applied</dt>
+          <dd class="col-sm-7"><%= diagnostics.migrations.applied_count || 0 %></dd>
+          <dt class="col-sm-5">Latest</dt>
+          <dd class="col-sm-7"><%= diagnostics.migrations.latest_applied_at ? new Date(diagnostics.migrations.latest_applied_at).toLocaleString() : 'None' %></dd>
+          <dt class="col-sm-5">Maintenance</dt>
+          <dd class="col-sm-7"><%= diagnostics.maintenance_mode ? 'Enabled' : 'Disabled' %></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>

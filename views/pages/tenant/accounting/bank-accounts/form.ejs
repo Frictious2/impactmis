@@ -1,0 +1,16 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div><h1 class="h4 mb-1"><%= bankAccount.id ? 'Edit Bank Account' : 'Create Bank Account' %></h1><p class="text-muted mb-0">The linked GL account must be an active asset account.</p></div>
+  <a class="btn btn-outline-secondary" href="/accounting/bank-accounts">Back to Bank Accounts</a>
+</section>
+<section class="card border-0 shadow-sm"><div class="card-body">
+  <form method="post" action="<%= formAction %>" class="row g-3">
+    <div class="col-md-6"><label class="form-label">Account Name</label><input class="form-control" name="account_name" value="<%= bankAccount.account_name || '' %>" required></div>
+    <div class="col-md-6"><label class="form-label">Bank Name</label><input class="form-control" name="bank_name" value="<%= bankAccount.bank_name || '' %>" required></div>
+    <div class="col-md-4"><label class="form-label">Account Number</label><input class="form-control" name="account_number" value="<%= bankAccount.account_number || '' %>"></div>
+    <div class="col-md-2"><label class="form-label">Currency</label><input class="form-control" name="currency" value="<%= bankAccount.currency || 'NLe' %>"></div>
+    <div class="col-md-3"><label class="form-label">Opening Balance</label><input class="form-control" type="number" step="0.01" min="0" name="opening_balance" value="<%= bankAccount.opening_balance || 0 %>"></div>
+    <div class="col-md-3"><label class="form-label">Status</label><select class="form-select" name="status"><% statusOptions.forEach((status) => { %><option value="<%= status.value %>" <%= (bankAccount.status || 'active') === status.value ? 'selected' : '' %>><%= status.label %></option><% }) %></select></div>
+    <div class="col-12"><label class="form-label">Linked GL Asset Account</label><select class="form-select" name="linked_gl_account_id" required><option value="">Select account</option><% accounts.forEach((account) => { %><option value="<%= account.id %>" <%= String(bankAccount.linked_gl_account_id || '') === String(account.id) ? 'selected' : '' %>><%= account.account_code %> - <%= account.account_name %></option><% }) %></select></div>
+    <div class="col-12"><button class="btn btn-success" type="submit"><%= bankAccount.id ? 'Save Changes' : 'Create Bank Account' %></button></div>
+  </form>
+</div></section>

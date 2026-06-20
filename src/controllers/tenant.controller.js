@@ -2061,10 +2061,10 @@ async function saveApprovalSettings(req, res, next) {
 
 async function auditLogs(req, res, next) {
   try {
-    const logs = await auditLogRepo.listByTenantId(req.currentUser.tenant_id, 100);
+    const logs = await auditLogRepo.listTenantAuditLogs(req.currentUser.tenant_id, {}, 100);
 
     return res.render("layouts/tenant-layout", {
-      pageTitle: "Audit Logs",
+      pageTitle: "Organization Audit Logs",
       contentPartial: "../pages/tenant/audit-logs",
       breadcrumbs: [{ label: "Dashboard", href: "/dashboard" }, { label: "Audit Logs" }],
       logs

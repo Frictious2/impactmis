@@ -2,6 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const pool = require("../src/db/pool");
+const auditLogRepo = require("../src/repos/audit-log.repo");
+const env = require("../src/config/env");
 const { getModuleCodes, parseJsonField } = require("../src/utils/tenant-form");
 
 const REQUIRED_TABLES = [
@@ -29,8 +31,41 @@ const REQUIRED_TABLES = [
   "project_budgets",
   "expenses",
   "expense_attachments",
+  "chart_of_accounts",
+  "journal_entries",
+  "journal_entry_lines",
+  "bank_accounts",
+  "bank_transactions",
+  "logframes",
+  "logframe_outcomes",
+  "logframe_outputs",
+  "logframe_activities",
+  "indicator_measurements",
+  "survey_forms",
+  "survey_questions",
+  "survey_responses",
+  "survey_answers",
   "notifications",
   "messages"
+];
+
+const REQUIRED_MIGRATIONS = [
+  "001_create_tenants.js",
+  "007_create_audit_logs.js",
+  "012_create_staff_members.js",
+  "013_create_attendance_records.js",
+  "014_create_branches.js",
+  "017_create_projects.js",
+  "020_create_activity_reports.js",
+  "024_create_payroll_settings.js",
+  "031_create_payroll_items.js",
+  "034_create_finance_categories.js",
+  "040_create_chart_of_accounts.js",
+  "044_create_bank_transactions.js",
+  "045_create_logframes.js",
+  "049_create_indicator_measurements.js",
+  "050_create_survey_forms.js",
+  "052_create_survey_responses_and_answers.js"
 ];
 
 const LOAD_CHECKS = [
@@ -42,14 +77,31 @@ const LOAD_CHECKS = [
   "../src/repos/project.repo",
   "../src/repos/payroll.repo",
   "../src/repos/expense.repo",
+  "../src/repos/accounting.repo",
+  "../src/repos/bank.repo",
+  "../src/repos/logframe.repo",
+  "../src/repos/measurement.repo",
+  "../src/repos/survey.repo",
   "../src/repos/report.repo",
   "../src/repos/notification.repo",
-  "../src/repos/message.repo"
+  "../src/repos/message.repo",
+  "../src/services/backup.service",
+  "../src/services/accounting.service",
+  "../src/services/bank.service",
+  "../src/services/logframe.service",
+  "../src/services/measurement.service",
+  "../src/services/survey.service",
+  "../src/services/diagnostics.service",
+  "../src/middleware/maintenance-mode"
 ];
 
 const UPLOAD_DIRS = [
+  env.uploadRoot,
   "public/uploads/activity-reports",
-  "public/uploads/expenses"
+  "public/uploads/expenses",
+  env.backupDir,
+  env.logDir,
+  "storage/tmp"
 ];
 
 function pass(message) {
@@ -74,6 +126,17 @@ async function checkTables() {
       fail(`missing table: ${table}`);
     }
   }
+}
+
+function checkMigrationsExist() {
+  REQUIRED_MIGRATIONS.forEach((migration) => {
+    const filePath = path.join(process.cwd(), "src", "db", "migrations", migration);
+    if (fs.existsSync(filePath)) {
+      pass(`migration exists: ${migration}`);
+    } else {
+      fail(`missing migration file: ${migration}`);
+    }
+  });
 }
 
 async function checkLicenses() {
@@ -131,6 +194,15 @@ function checkUploadDirs() {
   });
 }
 
+function checkHealthRouteExists() {
+  const appSource = fs.readFileSync(path.join(process.cwd(), "app.js"), "utf8");
+  if (appSource.includes('app.get("/health"') || appSource.includes("app.get('/health'")) {
+    pass("health endpoint route is registered");
+  } else {
+    fail("health endpoint route is not registered");
+  }
+}
+
 function runPhase6VerifyIfAvailable() {
   const scriptPath = path.join(process.cwd(), "scripts", "verify-phase6.js");
   if (!fs.existsSync(scriptPath)) {
@@ -151,10 +223,73 @@ function runPhase6VerifyIfAvailable() {
   }
 }
 
+async function checkAuditIsolation() {
+  const [tenants] = await pool.query("SELECT id FROM tenants ORDER BY id ASC LIMIT 2");
+  if (!tenants.length) {
+    fail("audit isolation check requires at least one tenant");
+    return;
+  }
+
+  const tenantA = tenants[0].id;
+  const tenantB = tenants[1] ? tenants[1].id : null;
+  const ipAddress = "127.0.0.77";
+  const insertedIds = [];
+
+  try {
+    const rows = [
+      [null, null, "developer.login", "user", null, JSON.stringify({ qa: true }), ipAddress],
+      [tenantA, null, "staff.created", "staff", "qa-a", JSON.stringify({ qa: true }), ipAddress],
+      [tenantA, null, "license.updated", "license", "qa-license", JSON.stringify({ qa: true }), ipAddress],
+      [tenantA, null, "tenant.created", "tenant", String(tenantA), JSON.stringify({ qa: true }), ipAddress]
+    ];
+
+    if (tenantB) {
+      rows.push([tenantB, null, "staff.created", "staff", "qa-b", JSON.stringify({ qa: true }), ipAddress]);
+    }
+
+    for (const row of rows) {
+      const [result] = await pool.query(
+        `
+          INSERT INTO audit_logs (
+            tenant_id, user_id, action, entity_type, entity_id, metadata_json, ip_address
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+        row
+      );
+      insertedIds.push(result.insertId);
+    }
+
+    const tenantLogs = await auditLogRepo.listTenantAuditLogs(tenantA, {}, 20);
+    const qaTenantLogs = tenantLogs.filter((log) => log.ip_address === ipAddress);
+    const actions = qaTenantLogs.map((log) => log.action).sort();
+
+    if (actions.length !== 1 || actions[0] !== "staff.created") {
+      fail(`tenant audit isolation failed; tenant saw actions: ${actions.join(", ") || "none"}`);
+    } else {
+      pass("tenant audit query excludes system, other-tenant, license, and tenant lifecycle logs");
+    }
+
+    const developerLogs = await auditLogRepo.listDeveloperAuditLogs({ action: "developer." }, 20);
+    if (developerLogs.some((log) => log.ip_address === ipAddress && log.action === "developer.login")) {
+      pass("developer audit query can see developer/system logs");
+    } else {
+      fail("developer audit query could not see temporary developer/system log");
+    }
+  } finally {
+    if (insertedIds.length) {
+      await pool.query("DELETE FROM audit_logs WHERE id IN (?)", [insertedIds]);
+    }
+  }
+}
+
 async function main() {
+  checkMigrationsExist();
   await checkTables();
   await checkLicenses();
   await checkDeveloperAdmin();
+  await checkAuditIsolation();
+  checkHealthRouteExists();
   checkModuleLoads();
   checkUploadDirs();
   runPhase6VerifyIfAvailable();

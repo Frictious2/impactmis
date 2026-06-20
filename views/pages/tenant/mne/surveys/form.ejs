@@ -1,0 +1,11 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div><h1 class="h4 mb-1"><%= form.id ? 'Edit Survey' : 'Create Survey' %></h1><p class="text-muted mb-0">Draft surveys can be edited before publishing.</p></div>
+  <a class="btn btn-outline-secondary" href="/surveys">Back to Surveys</a>
+</section>
+<section class="card border-0 shadow-sm"><div class="card-body"><form method="post" action="<%= formAction %>" class="row g-3">
+  <div class="col-md-8"><label class="form-label">Title</label><input class="form-control" name="title" value="<%= form.title || '' %>" required></div>
+  <div class="col-md-4"><label class="form-label">Status</label><select class="form-select" name="status"><% ['draft','published','archived'].forEach((status) => { %><option value="<%= status %>" <%= (form.status || 'draft') === status ? 'selected' : '' %>><%= status %></option><% }) %></select></div>
+  <div class="col-12"><label class="form-label">Project</label><select class="form-select" name="project_id"><option value="">General survey</option><% projects.forEach((project) => { %><option value="<%= project.id %>" <%= String(form.project_id || '') === String(project.id) ? 'selected' : '' %>><%= project.project_code %> - <%= project.project_name %></option><% }) %></select></div>
+  <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="4"><%= form.description || '' %></textarea></div>
+  <div class="col-12"><button class="btn btn-success" type="submit"><%= form.id ? 'Save Survey' : 'Create Survey' %></button></div>
+</form></div></section>

@@ -1,0 +1,31 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div><h1 class="h4 mb-1">Indicator Measurements</h1><p class="text-muted mb-0"><%= indicator.indicator_name %></p></div>
+  <a class="btn btn-outline-secondary" href="/projects/<%= indicator.project_id %>?tab=indicators">Back to Indicators</a>
+</section>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <section class="card border-0 shadow-sm mb-4"><div class="card-body">
+      <div class="row text-center">
+        <div class="col"><div class="text-muted small">Baseline</div><div class="h4"><%= progress.baseline %></div></div>
+        <div class="col"><div class="text-muted small">Current</div><div class="h4"><%= progress.current %></div></div>
+        <div class="col"><div class="text-muted small">Target</div><div class="h4"><%= progress.target %></div></div>
+        <div class="col"><div class="text-muted small">Progress</div><div class="h4"><%= progress.progressPercentage %>%</div></div>
+      </div>
+      <div class="progress mt-3"><div class="progress-bar bg-success" style="width:<%= progress.progressPercentage %>%"><%= progress.progressPercentage %>%</div></div>
+    </div></section>
+    <section class="card border-0 shadow-sm"><div class="table-responsive"><table class="table mb-0 align-middle">
+      <thead class="table-light"><tr><th>Type</th><th>Date</th><th>Value</th><th>Comments</th><th>Entered By</th></tr></thead>
+      <tbody><% if (!measurements.length) { %><tr><td colspan="5" class="text-center text-muted py-5">No measurements yet.</td></tr><% } %><% measurements.forEach((m) => { %><tr><td><%= m.measurement_type %></td><td><%= new Date(m.measurement_date).toISOString().slice(0,10) %></td><td><%= m.value %></td><td><%= m.comments || '' %></td><td><%= m.entered_by_name || 'Unknown' %></td></tr><% }) %></tbody>
+    </table></div></section>
+  </div>
+  <div class="col-lg-4"><section class="card border-0 shadow-sm"><div class="card-body">
+    <h2 class="h6">Add Measurement</h2>
+    <form method="post" action="/indicators/<%= indicator.id %>/measurements" class="row g-3">
+      <div class="col-12"><label class="form-label">Type</label><select class="form-select" name="measurement_type"><option value="baseline">Baseline</option><option value="target">Target</option><option value="periodic">Periodic</option><option value="endline">Endline</option></select></div>
+      <div class="col-12"><label class="form-label">Date</label><input class="form-control" type="date" name="measurement_date" required></div>
+      <div class="col-12"><label class="form-label">Value</label><input class="form-control" type="number" step="0.01" name="value" required></div>
+      <div class="col-12"><label class="form-label">Comments</label><textarea class="form-control" name="comments" rows="3"></textarea></div>
+      <div class="col-12"><button class="btn btn-success" type="submit">Save Measurement</button></div>
+    </form>
+  </div></section></div>
+</div>

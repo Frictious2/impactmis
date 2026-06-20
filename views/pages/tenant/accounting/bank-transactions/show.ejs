@@ -1,0 +1,18 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div><h1 class="h4 mb-1">Bank Transaction</h1><p class="text-muted mb-0"><%= formatDate(transaction.transaction_date) %> · <span class="badge text-bg-<%= statusBadge(transaction.status) %>"><%= transaction.status %></span></p></div>
+  <div class="d-flex gap-2">
+    <% if (transaction.status === 'draft') { %><form method="post" action="/accounting/bank-transactions/<%= transaction.id %>/post"><button class="btn btn-success" type="submit">Post</button></form><% } %>
+    <% if (transaction.status !== 'cancelled') { %><form method="post" action="/accounting/bank-transactions/<%= transaction.id %>/cancel"><button class="btn btn-outline-danger" type="submit">Cancel</button></form><% } %>
+  </div>
+</section>
+<section class="card border-0 shadow-sm"><div class="card-body">
+  <div class="row g-3">
+    <div class="col-md-4"><div class="text-muted small">Bank Account</div><div class="fw-semibold"><%= transaction.bank_account_name %></div></div>
+    <div class="col-md-4"><div class="text-muted small">Type</div><div class="fw-semibold"><%= transaction.transaction_type %></div></div>
+    <div class="col-md-4"><div class="text-muted small">Amount</div><div class="fw-semibold"><%= money(transaction.amount) %></div></div>
+    <div class="col-md-4"><div class="text-muted small">Bank GL</div><div><%= transaction.bank_gl_account_code || 'Not linked' %> <%= transaction.bank_gl_account_name || '' %></div></div>
+    <div class="col-md-4"><div class="text-muted small">Offset GL</div><div><%= transaction.offset_account_code || 'None' %> <%= transaction.offset_account_name || '' %></div></div>
+    <div class="col-md-4"><div class="text-muted small">Journal</div><div><%= transaction.journal_number || 'Not posted' %></div></div>
+    <div class="col-12"><div class="text-muted small">Description</div><div><%= transaction.description %></div></div>
+  </div>
+</div></section>

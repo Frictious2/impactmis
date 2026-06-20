@@ -161,6 +161,37 @@ const REPORTS = {
       ["remaining_amount", "Remaining"],
       ["utilization_percentage", "Utilization %"]
     ]
+  },
+  "logframe-progress": {
+    title: "LogFrame Progress",
+    group: "Activity & M&E Reports",
+    roles: ["Tenant Admin", "Auditor", "Project Manager", "Data Entry Officer", "M&E Officer"],
+    query: reportRepo.logframeProgress,
+    columns: [
+      ["project_code", "Project Code"],
+      ["project_name", "Project"],
+      ["logframe_title", "LogFrame"],
+      ["status", "Status"],
+      ["outcomes", "Outcomes"],
+      ["outputs", "Outputs"],
+      ["activities", "Activities"],
+      ["completed_activities", "Completed Activities"],
+      ["completion_percentage", "Completion %"]
+    ]
+  },
+  "survey-summary": {
+    title: "Survey Summary",
+    group: "Activity & M&E Reports",
+    roles: ["Tenant Admin", "Auditor", "Project Manager", "Data Entry Officer", "M&E Officer"],
+    query: reportRepo.surveySummary,
+    columns: [
+      ["survey_title", "Survey"],
+      ["project", "Project"],
+      ["status", "Status"],
+      ["questions", "Questions"],
+      ["responses", "Responses"],
+      ["latest_response_at", "Latest Response"]
+    ]
   }
 };
 
@@ -182,8 +213,8 @@ const CENTER_GROUPS = [
   },
   {
     title: "Activity & M&E Reports",
-    reports: ["Activity Report Register", "Beneficiary Summary", "Indicator Progress Report"],
-    implemented: ["activity-register", "beneficiary-summary", "indicator-progress"]
+    reports: ["Activity Report Register", "Beneficiary Summary", "Indicator Progress Report", "LogFrame Progress", "Survey Summary"],
+    implemented: ["activity-register", "beneficiary-summary", "indicator-progress", "logframe-progress", "survey-summary"]
   },
   {
     title: "Payroll Reports",

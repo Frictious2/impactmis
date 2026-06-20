@@ -1,0 +1,90 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 mb-1">Project LogFrame</h1>
+    <p class="text-muted mb-0"><%= project.project_code %> - <%= project.project_name %></p>
+  </div>
+  <a class="btn btn-outline-secondary" href="/projects/<%= project.id %>">Back to Project</a>
+</section>
+
+<% if (!logframe) { %>
+  <section class="card border-0 shadow-sm">
+    <div class="card-body">
+      <h2 class="h5">Create LogFrame</h2>
+      <form method="post" action="/projects/<%= project.id %>/logframe" class="row g-3">
+        <div class="col-md-8"><label class="form-label">Title</label><input class="form-control" name="title" value="<%= project.project_name %> LogFrame" required></div>
+        <div class="col-md-4"><label class="form-label">Status</label><select class="form-select" name="status"><option value="draft">Draft</option><option value="active">Active</option></select></div>
+        <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="3"></textarea></div>
+        <div class="col-12"><button class="btn btn-success" type="submit">Create LogFrame</button></div>
+      </form>
+    </div>
+  </section>
+<% } else { %>
+  <section class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between">
+        <div><h2 class="h5 mb-1"><%= logframe.title %></h2><p class="text-muted mb-0"><%= logframe.description || 'No description provided.' %></p></div>
+        <span class="badge text-bg-<%= logframe.status === 'active' ? 'success' : 'secondary' %> align-self-start"><%= logframe.status %></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <% if (!outcomes.length) { %><div class="card border-0 shadow-sm"><div class="card-body text-center text-muted py-5">No outcomes yet.</div></div><% } %>
+      <% outcomes.forEach((outcome) => { %>
+        <section class="card border-0 shadow-sm mb-3">
+          <div class="card-body">
+            <h3 class="h6 text-success"><%= outcome.outcome_code %>: <%= outcome.outcome_statement %></h3>
+            <% outcome.outputs.forEach((output) => { %>
+              <div class="border-start border-3 border-success ps-3 my-3">
+                <div class="fw-semibold"><%= output.output_code %>: <%= output.output_statement %></div>
+                <% output.activities.forEach((activity) => { %>
+                  <div class="card bg-light border-0 my-2"><div class="card-body py-2">
+                    <div class="d-flex justify-content-between gap-2">
+                      <div><%= activity.activity_code %>: <%= activity.activity_statement %><div class="small text-muted"><%= activity.planned_start_date ? new Date(activity.planned_start_date).toISOString().slice(0,10) : '' %> <%= activity.planned_end_date ? `to ${new Date(activity.planned_end_date).toISOString().slice(0,10)}` : '' %></div></div>
+                      <form method="post" action="/logframe/activities/<%= activity.id %>/status" class="d-flex gap-2">
+                        <select class="form-select form-select-sm" name="status">
+                          <% ['not_started','in_progress','completed','cancelled'].forEach((status) => { %><option value="<%= status %>" <%= activity.status === status ? 'selected' : '' %>><%= status.replace('_',' ') %></option><% }) %>
+                        </select>
+                        <button class="btn btn-sm btn-outline-success" type="submit">Save</button>
+                      </form>
+                    </div>
+                  </div></div>
+                <% }) %>
+                <form method="post" action="/logframe/activities" class="row g-2 mt-2">
+                  <input type="hidden" name="output_id" value="<%= output.id %>">
+                  <div class="col-md-2"><input class="form-control form-control-sm" name="activity_code" placeholder="A1.1" required></div>
+                  <div class="col-md-5"><input class="form-control form-control-sm" name="activity_statement" placeholder="Activity statement" required></div>
+                  <div class="col-md-2"><input class="form-control form-control-sm" type="date" name="planned_start_date"></div>
+                  <div class="col-md-2"><input class="form-control form-control-sm" type="date" name="planned_end_date"></div>
+                  <div class="col-md-1"><button class="btn btn-sm btn-success" type="submit">Add</button></div>
+                </form>
+              </div>
+            <% }) %>
+            <form method="post" action="/logframe/outputs" class="row g-2 mt-3">
+              <input type="hidden" name="outcome_id" value="<%= outcome.id %>">
+              <div class="col-md-2"><input class="form-control form-control-sm" name="output_code" placeholder="OP1" required></div>
+              <div class="col-md-7"><input class="form-control form-control-sm" name="output_statement" placeholder="Output statement" required></div>
+              <div class="col-md-3"><button class="btn btn-sm btn-outline-success" type="submit">Add Output</button></div>
+            </form>
+          </div>
+        </section>
+      <% }) %>
+    </div>
+    <div class="col-lg-4">
+      <section class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h2 class="h6">Add Outcome</h2>
+          <form method="post" action="/logframe/outcomes" class="row g-3">
+            <input type="hidden" name="logframe_id" value="<%= logframe.id %>">
+            <input type="hidden" name="project_id" value="<%= project.id %>">
+            <div class="col-12"><label class="form-label">Code</label><input class="form-control" name="outcome_code" placeholder="OC1" required></div>
+            <div class="col-12"><label class="form-label">Statement</label><textarea class="form-control" name="outcome_statement" rows="3" required></textarea></div>
+            <div class="col-12"><label class="form-label">Assumptions/Risks</label><textarea class="form-control" name="assumptions_risks" rows="2"></textarea></div>
+            <div class="col-12"><button class="btn btn-success" type="submit">Add Outcome</button></div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+<% } %>

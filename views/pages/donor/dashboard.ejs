@@ -144,4 +144,45 @@
       </section>
     </div>
   </div>
+
+  <div class="row g-4 mt-1">
+    <div class="col-xl-6">
+      <section class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Approved LogFrame Summaries</h2>
+          <% if (!stats.logframeSummaries.length) { %>
+            <p class="text-muted mb-0">No approved LogFrames are available yet.</p>
+          <% } else { %>
+            <% stats.logframeSummaries.forEach((row) => { %>
+              <div class="border-top pt-3 mt-3">
+                <div class="fw-semibold"><%= row.project_code %> - <%= row.project_name %></div>
+                <div class="text-muted small"><%= row.title %></div>
+                <div class="small"><%= row.outcomes %> outcomes · <%= row.activities %> activities</div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+    </div>
+    <div class="col-xl-6">
+      <section class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Survey Summary Statistics</h2>
+          <% if (!stats.surveySummaries.length) { %>
+            <p class="text-muted mb-0">No published survey summaries are available yet.</p>
+          <% } else { %>
+            <% stats.surveySummaries.forEach((row) => { %>
+              <div class="d-flex justify-content-between border-top pt-3 mt-3">
+                <div>
+                  <div class="fw-semibold"><%= row.title %></div>
+                  <div class="small text-muted"><%= row.project_code || 'General' %> <%= row.project_name || '' %></div>
+                </div>
+                <div class="fw-semibold"><%= row.responses %></div>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+    </div>
+  </div>
 </section>

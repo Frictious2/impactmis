@@ -2,6 +2,8 @@ const express = require("express");
 const tenantController = require("../controllers/tenant.controller");
 const payrollController = require("../controllers/payroll.controller");
 const financeController = require("../controllers/finance.controller");
+const accountingController = require("../controllers/accounting.controller");
+const mneController = require("../controllers/mne.controller");
 const reportController = require("../controllers/report.controller");
 const notificationController = require("../controllers/notification.controller");
 const messageController = require("../controllers/message.controller");
@@ -11,8 +13,15 @@ const { requireActiveLicense } = require("../middleware/require-active-license")
 const { requireNonDonorTenant } = require("../middleware/require-non-donor-tenant");
 const { requireModuleAccess } = require("../middleware/require-module-access");
 const { requirePayrollView, requirePayrollManage, requirePayrollSelf } = require("../middleware/require-payroll-role");
-const { requireFinanceManager, requireExpenseView, requireExpenseCreate } = require("../middleware/require-finance-role");
+const {
+  requireFinanceManager,
+  requireExpenseView,
+  requireExpenseCreate,
+  requireAccountingView,
+  requireAccountingManage
+} = require("../middleware/require-finance-role");
 const { requireReportCenter, requireNamedReport } = require("../middleware/require-report-access");
+const { requireMneView, requireMneManage } = require("../middleware/require-mne-role");
 const {
   prepareOrganizationInput,
   prepareDepartmentInput,
@@ -75,6 +84,16 @@ const {
   expenseValidator,
   rejectExpenseValidator
 } = require("../validators/finance.validator");
+const {
+  prepareAccountInput,
+  prepareJournalInput,
+  prepareBankAccountInput,
+  prepareBankTransactionInput,
+  accountValidator,
+  journalValidator,
+  bankAccountValidator,
+  bankTransactionValidator
+} = require("../validators/accounting.validator");
 const { activityReportUpload } = require("../middleware/activity-report-upload");
 const { expenseUpload } = require("../middleware/expense-upload");
 const env = require("../config/env");
@@ -272,6 +291,25 @@ router.post(
   indicatorUpdateValidator,
   tenantController.updateIndicatorProgress
 );
+router.get("/projects/:id/logframe", requireProjectsModule, requireMneView, mneController.projectLogFrame);
+router.post("/projects/:id/logframe", requireProjectsModule, requireMneManage, mneController.createLogFrame);
+router.post("/logframe/outcomes", requireProjectsModule, requireMneManage, mneController.createOutcome);
+router.post("/logframe/outputs", requireProjectsModule, requireMneManage, mneController.createOutput);
+router.post("/logframe/activities", requireProjectsModule, requireMneManage, mneController.createActivity);
+router.post("/logframe/activities/:id/status", requireProjectsModule, requireMneManage, mneController.updateActivityStatus);
+router.get("/indicators/:id/measurements", requireProjectsModule, requireMneView, mneController.indicatorMeasurements);
+router.post("/indicators/:id/measurements", requireProjectsModule, requireMneManage, mneController.addMeasurement);
+router.get("/surveys", requireReportsModule, requireMneView, mneController.surveys);
+router.get("/surveys/create", requireReportsModule, requireMneManage, mneController.showCreateSurvey);
+router.post("/surveys", requireReportsModule, requireMneManage, mneController.createSurvey);
+router.get("/surveys/:id", requireReportsModule, requireMneView, mneController.showSurvey);
+router.get("/surveys/:id/edit", requireReportsModule, requireMneManage, mneController.showEditSurvey);
+router.post("/surveys/:id/edit", requireReportsModule, requireMneManage, mneController.updateSurvey);
+router.post("/surveys/:id/questions", requireReportsModule, requireMneManage, mneController.addQuestion);
+router.post("/surveys/:id/publish", requireReportsModule, requireMneManage, mneController.publishSurvey);
+router.get("/surveys/:id/respond", requireReportsModule, mneController.respondSurvey);
+router.post("/surveys/:id/respond", requireReportsModule, mneController.submitSurvey);
+router.get("/surveys/:id/responses", requireReportsModule, requireMneView, mneController.surveyResponses);
 router.get("/finance/categories", requireFinanceModule, requireFinanceManager, financeController.categories);
 router.post(
   "/finance/categories",
@@ -329,6 +367,97 @@ router.post(
 router.post("/expenses/:id/mark-paid", requireFinanceModule, requireFinanceManager, financeController.markExpensePaid);
 router.post("/expenses/:id/cancel", requireFinanceModule, requireExpenseCreate, financeController.cancelExpense);
 router.post("/expenses/:id/attachments", requireFinanceModule, requireExpenseCreate, expenseUpload, financeController.addAttachment);
+router.get("/accounting/accounts", requireFinanceModule, requireAccountingView, accountingController.accounts);
+router.get("/accounting/accounts/create", requireFinanceModule, requireAccountingManage, accountingController.showCreateAccount);
+router.post(
+  "/accounting/accounts",
+  requireFinanceModule,
+  requireAccountingManage,
+  prepareAccountInput,
+  accountValidator,
+  accountingController.createAccount
+);
+router.get("/accounting/accounts/:id/edit", requireFinanceModule, requireAccountingManage, accountingController.showEditAccount);
+router.post(
+  "/accounting/accounts/:id/edit",
+  requireFinanceModule,
+  requireAccountingManage,
+  prepareAccountInput,
+  accountValidator,
+  accountingController.updateAccount
+);
+router.get("/accounting/journals", requireFinanceModule, requireAccountingView, accountingController.journals);
+router.get("/accounting/journals/create", requireFinanceModule, requireAccountingManage, accountingController.showCreateJournal);
+router.post(
+  "/accounting/journals",
+  requireFinanceModule,
+  requireAccountingManage,
+  prepareJournalInput,
+  journalValidator,
+  accountingController.createJournal
+);
+router.get("/accounting/journals/:id", requireFinanceModule, requireAccountingView, accountingController.journalDetail);
+router.get("/accounting/journals/:id/edit", requireFinanceModule, requireAccountingManage, accountingController.showEditJournal);
+router.post(
+  "/accounting/journals/:id/edit",
+  requireFinanceModule,
+  requireAccountingManage,
+  prepareJournalInput,
+  journalValidator,
+  accountingController.updateJournal
+);
+router.post("/accounting/journals/:id/post", requireFinanceModule, requireAccountingManage, accountingController.postJournal);
+router.post("/accounting/journals/:id/cancel", requireFinanceModule, requireAccountingManage, accountingController.cancelJournal);
+router.get("/accounting/bank-accounts", requireFinanceModule, requireAccountingView, accountingController.bankAccounts);
+router.get("/accounting/bank-accounts/create", requireFinanceModule, requireAccountingManage, accountingController.showCreateBankAccount);
+router.post(
+  "/accounting/bank-accounts",
+  requireFinanceModule,
+  requireAccountingManage,
+  prepareBankAccountInput,
+  bankAccountValidator,
+  accountingController.createBankAccount
+);
+router.get("/accounting/bank-accounts/:id/edit", requireFinanceModule, requireAccountingManage, accountingController.showEditBankAccount);
+router.post(
+  "/accounting/bank-accounts/:id/edit",
+  requireFinanceModule,
+  requireAccountingManage,
+  prepareBankAccountInput,
+  bankAccountValidator,
+  accountingController.updateBankAccount
+);
+router.get("/accounting/bank-transactions", requireFinanceModule, requireAccountingView, accountingController.bankTransactions);
+router.get(
+  "/accounting/bank-transactions/create",
+  requireFinanceModule,
+  requireAccountingManage,
+  accountingController.showCreateBankTransaction
+);
+router.post(
+  "/accounting/bank-transactions",
+  requireFinanceModule,
+  requireAccountingManage,
+  prepareBankTransactionInput,
+  bankTransactionValidator,
+  accountingController.createBankTransaction
+);
+router.get("/accounting/bank-transactions/:id", requireFinanceModule, requireAccountingView, accountingController.bankTransactionDetail);
+router.post(
+  "/accounting/bank-transactions/:id/post",
+  requireFinanceModule,
+  requireAccountingManage,
+  accountingController.postBankTransaction
+);
+router.post(
+  "/accounting/bank-transactions/:id/cancel",
+  requireFinanceModule,
+  requireAccountingManage,
+  accountingController.cancelBankTransaction
+);
+router.get("/accounting/trial-balance", requireFinanceModule, requireAccountingView, accountingController.trialBalance);
+router.get("/accounting/income-statement", requireFinanceModule, requireAccountingView, accountingController.incomeStatement);
+router.get("/accounting/balance-sheet", requireFinanceModule, requireAccountingView, accountingController.balanceSheet);
 router.get("/reports/center", requireReportsModule, requireReportCenter, reportController.center);
 router.get("/reports/:reportName", requireReportsModule, requireNamedReport, reportController.showReport);
 router.get("/my/payroll", requirePayrollModule, requirePayrollSelf, payrollController.myPayroll);

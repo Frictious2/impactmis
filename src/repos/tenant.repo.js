@@ -11,6 +11,11 @@ const activityReportRepo = require("./activity-report.repo");
 const payrollRepo = require("./payroll.repo");
 const financeRepo = require("./finance.repo");
 const budgetRepo = require("./budget.repo");
+const accountingRepo = require("./accounting.repo");
+const logframeRepo = require("./logframe.repo");
+const measurementRepo = require("./measurement.repo");
+const surveyRepo = require("./survey.repo");
+const auditLogRepo = require("./audit-log.repo");
 
 async function findById(id, db = pool) {
   const [rows] = await db.query("SELECT * FROM tenants WHERE id = ? LIMIT 1", [id]);
@@ -197,9 +202,7 @@ async function findDeveloperTenantDetailById(id) {
 }
 
 async function getTenantDashboardStats(tenantId) {
-  const auditLogCountPromise = pool
-    .query("SELECT COUNT(*) AS total FROM audit_logs WHERE tenant_id = ?", [tenantId])
-    .then(([[row]]) => Number(row.total || 0));
+  const auditLogCountPromise = auditLogRepo.countTenantAuditLogs(tenantId);
 
   const [
     organizationProfile,
@@ -227,7 +230,14 @@ async function getTenantDashboardStats(tenantId) {
     expensesThisMonthCount,
     pendingExpenseApprovalsCount,
     approvedExpensesThisMonth,
-    projectBudgetUtilization
+    projectBudgetUtilization,
+    bankAccountsCount,
+    unpostedJournalsCount,
+    currentMonthIncome,
+    currentMonthExpenses,
+    activeLogFramesCount,
+    indicatorTrackSummary,
+    surveySummary
   ] =
     await Promise.all([
       organizationProfileRepo.findByTenantId(tenantId),
@@ -255,7 +265,14 @@ async function getTenantDashboardStats(tenantId) {
       financeRepo.countExpensesThisMonth(tenantId),
       financeRepo.countPendingExpenseApprovals(tenantId),
       financeRepo.countApprovedExpensesThisMonth(tenantId),
-      budgetRepo.getTenantBudgetUtilization(tenantId)
+      budgetRepo.getTenantBudgetUtilization(tenantId),
+      accountingRepo.countBankAccounts(tenantId),
+      accountingRepo.countUnpostedJournals(tenantId),
+      accountingRepo.sumCurrentMonthByType(tenantId, "income"),
+      accountingRepo.sumCurrentMonthByType(tenantId, "expense"),
+      logframeRepo.countActiveByTenantId(tenantId),
+      measurementRepo.countOnTrack(tenantId),
+      surveyRepo.countResponsesByTenantId(tenantId)
     ]);
 
   return {
@@ -284,6 +301,15 @@ async function getTenantDashboardStats(tenantId) {
     pendingExpenseApprovalsCount,
     approvedExpensesThisMonth,
     projectBudgetUtilization,
+    bankAccountsCount,
+    unpostedJournalsCount,
+    currentMonthIncome,
+    currentMonthExpenses,
+    activeLogFramesCount,
+    indicatorsOnTrack: indicatorTrackSummary.onTrack,
+    indicatorsOffTrack: indicatorTrackSummary.offTrack,
+    surveysConducted: surveySummary.surveys,
+    totalSurveyResponses: surveySummary.responses,
     workflowCount: approvalWorkflow
       ? [
           approvalWorkflow.attendance_approvals,

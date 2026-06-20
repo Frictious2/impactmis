@@ -20,6 +20,17 @@ This matrix summarizes the intended middleware and access controls after the Pha
 | `/donor/activity-reports*` | GET | Tenant donor | `reports` module | Yes | Approved reports only. |
 | `/donor/indicators` | GET | Tenant donor | `projects` module | Yes | Donor-safe indicators only. |
 | `/donor/beneficiaries` | GET | Tenant donor | `reports` module | Yes | Approved report summaries only. |
+| `/accounting/accounts*` | GET/POST | `requireAuth`, `requireTenantUser`, `requireActiveLicense` | `finance` module; Tenant Admin/Finance Manager manage, Auditor view-only | Yes | Chart of accounts is tenant-scoped. |
+| `/accounting/journals*` | GET/POST | `requireAuth`, `requireTenantUser`, `requireActiveLicense` | `finance` module; Tenant Admin/Finance Manager manage, Auditor view-only | Yes | Draft journals editable; posted journals read-only. |
+| `/accounting/bank-accounts*` | GET/POST | `requireAuth`, `requireTenantUser`, `requireActiveLicense` | `finance` module; Tenant Admin/Finance Manager manage, Auditor view-only | Yes | Linked GL account must be tenant-owned asset account. |
+| `/accounting/bank-transactions*` | GET/POST | `requireAuth`, `requireTenantUser`, `requireActiveLicense` | `finance` module; Tenant Admin/Finance Manager manage, Auditor view-only | Yes | Posting creates tenant-scoped linked journal entry. |
+| `/accounting/trial-balance` | GET | `requireAuth`, `requireTenantUser`, `requireActiveLicense` | `finance` module; Tenant Admin/Finance Manager/Auditor | Yes | Statement reads posted journals only. |
+| `/accounting/income-statement` | GET | `requireAuth`, `requireTenantUser`, `requireActiveLicense` | `finance` module; Tenant Admin/Finance Manager/Auditor | Yes | Statement reads posted journals only. |
+| `/accounting/balance-sheet` | GET | `requireAuth`, `requireTenantUser`, `requireActiveLicense` | `finance` module; Tenant Admin/Finance Manager/Auditor | Yes | Statement reads posted journals only. |
+| `/projects/:id/logframe` | GET/POST | `requireAuth`, `requireTenantUser`, `requireActiveLicense` | `projects` module; M&E view/manage roles | Yes | Project LogFrame tree and creation. |
+| `/logframe/*` | POST | Tenant user + CSRF | `projects` module; M&E manage roles | Yes | Outcomes, outputs, activities, and activity status updates. |
+| `/indicators/:id/measurements` | GET/POST | Tenant user + CSRF on POST | `projects` module; M&E view/manage roles | Yes | Indicator baseline/target/periodic/endline tracking. |
+| `/surveys*` | GET/POST | Tenant user + CSRF on POST | `reports` module; M&E view/manage roles; response route available to tenant users | Yes | Survey builder, publishing, response capture, and analytics. |
 | `/license-expired` | GET | `requireAuth` | `requireTenantUser` | Yes | Available even when license is missing/expired. |
 | `/notifications` | GET | `requireAuth` | `requireTenantUser`, `requireActiveLicense` | Yes | User sees own and tenant-wide notifications. |
 | `/notifications/:id/read` | POST | Tenant user + CSRF | Own/tenant-wide notification only | Yes | Audits `notification.read`. |

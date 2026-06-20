@@ -103,6 +103,36 @@ async function getDashboardMetrics(tenantId, db = pool) {
     [tenantId]
   );
 
+  const [logframeSummaries] = await db.query(
+    `
+      SELECT lf.title, p.project_code, p.project_name, COUNT(DISTINCT lo.id) AS outcomes, COUNT(DISTINCT la.id) AS activities
+      FROM logframes lf
+      INNER JOIN projects p ON p.id = lf.project_id AND p.tenant_id = lf.tenant_id
+      LEFT JOIN logframe_outcomes lo ON lo.logframe_id = lf.id AND lo.tenant_id = lf.tenant_id
+      LEFT JOIN logframe_outputs op ON op.outcome_id = lo.id AND op.tenant_id = lo.tenant_id
+      LEFT JOIN logframe_activities la ON la.output_id = op.id AND la.tenant_id = op.tenant_id
+      WHERE lf.tenant_id = ? AND lf.status = 'active' AND p.status IN ('active', 'completed')
+      GROUP BY lf.id, lf.title, p.project_code, p.project_name
+      ORDER BY p.project_name ASC
+      LIMIT 6
+    `,
+    [tenantId]
+  );
+
+  const [surveySummaries] = await db.query(
+    `
+      SELECT sf.title, p.project_code, p.project_name, COUNT(sr.id) AS responses
+      FROM survey_forms sf
+      LEFT JOIN projects p ON p.id = sf.project_id AND p.tenant_id = sf.tenant_id
+      LEFT JOIN survey_responses sr ON sr.survey_form_id = sf.id AND sr.tenant_id = sf.tenant_id
+      WHERE sf.tenant_id = ? AND sf.status = 'published'
+      GROUP BY sf.id, sf.title, p.project_code, p.project_name
+      ORDER BY responses DESC, sf.title ASC
+      LIMIT 6
+    `,
+    [tenantId]
+  );
+
   return {
     activeProjectCount: Number(metrics.active_project_count || 0),
     approvedReportCount: Number(metrics.approved_report_count || 0),
@@ -110,7 +140,9 @@ async function getDashboardMetrics(tenantId, db = pool) {
     indicatorsOnTrack: Number(metrics.indicators_on_track || 0),
     reportsByProject,
     beneficiariesByMonth: beneficiariesByMonth.reverse(),
-    indicatorSummary
+    indicatorSummary,
+    logframeSummaries,
+    surveySummaries
   };
 }
 

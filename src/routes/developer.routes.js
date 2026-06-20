@@ -1,5 +1,6 @@
 const express = require("express");
 const developerController = require("../controllers/developer.controller");
+const backupController = require("../controllers/backup.controller");
 const { requireAuth } = require("../middleware/require-auth");
 const { requireDeveloper } = require("../middleware/require-developer");
 const {
@@ -37,6 +38,10 @@ router.post("/tenants/:id/reactivate", developerController.reactivateTenant);
 router.get("/licenses", developerController.licenses);
 router.get("/users", developerController.users);
 router.get("/audit-logs", developerController.auditLogs);
+router.get("/backups", backupController.index);
+router.post("/backups/create", backupController.create);
+router.get("/backups/:filename/download", backupController.download);
+router.post("/backups/:filename/delete", backupController.remove);
 router.get("/settings", developerController.settings);
 
 module.exports = router;

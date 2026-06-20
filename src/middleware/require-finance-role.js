@@ -1,4 +1,5 @@
 const expenseService = require("../services/expense.service");
+const accountingService = require("../services/accounting.service");
 
 function deny(req, res) {
   req.flash("error", "You do not have permission to access finance or expenses.");
@@ -26,8 +27,24 @@ function requireExpenseCreate(req, res, next) {
   return next();
 }
 
+function requireAccountingView(req, res, next) {
+  if (!req.currentUser || !accountingService.VIEW_ROLES.has(req.currentUser.role)) {
+    return deny(req, res);
+  }
+  return next();
+}
+
+function requireAccountingManage(req, res, next) {
+  if (!req.currentUser || !accountingService.MANAGE_ROLES.has(req.currentUser.role)) {
+    return deny(req, res);
+  }
+  return next();
+}
+
 module.exports = {
   requireFinanceManager,
   requireExpenseView,
-  requireExpenseCreate
+  requireExpenseCreate,
+  requireAccountingView,
+  requireAccountingManage
 };

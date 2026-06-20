@@ -6,3 +6,11 @@ dev.err
 app-test.out
 app-test.err
 *.cookies
+storage/backups/*
+storage/logs/*
+storage/tmp/*
+public/uploads/*
+!storage/backups/.gitkeep
+!storage/logs/.gitkeep
+!storage/tmp/.gitkeep
+!public/uploads/.gitkeep

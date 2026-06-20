@@ -244,13 +244,18 @@ async function expenseDetail(req, res, next) {
     if (!context) {
       return renderNotFound(res, "Expense Not Found");
     }
-    const activity = await auditLogRepo.listByTenantId(req.currentUser.tenant_id, 50);
+    const activity = await auditLogRepo.listTenantEntityAuditLogs(
+      req.currentUser.tenant_id,
+      "expense",
+      context.expense.id,
+      50
+    );
     return res.render("layouts/tenant-layout", {
       pageTitle: context.expense.expense_code,
       contentPartial: "../pages/tenant/finance/expenses/show",
       breadcrumbs: financeBreadcrumbs({ label: "Expenses", href: "/expenses" }, { label: context.expense.expense_code }),
       ...context,
-      activity: activity.filter((entry) => entry.entity_type === "expense" && String(entry.entity_id) === String(context.expense.id)),
+      activity,
       canApproveExpense: expenseService.APPROVE_ROLES.has(req.currentUser.role),
       canEditExpense: expenseService.CREATE_ROLES.has(req.currentUser.role) && !["approved", "paid"].includes(context.expense.status),
       statusBadge,

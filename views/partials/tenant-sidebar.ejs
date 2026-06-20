@@ -36,10 +36,20 @@
       <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/payroll') ? 'active' : '' %>" href="/payroll/runs">Payroll</a>
     <% } %>
     <% if (hasSidebarModule('finance')) { %>
-      <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/expenses') || currentPath.startsWith('/finance') ? 'active' : '' %>" href="/expenses">Finance &amp; Expenses</a>
+      <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/expenses') || currentPath.startsWith('/finance') || currentPath.startsWith('/accounting') ? 'active' : '' %>" href="/expenses">Finance &amp; Expenses</a>
+      <div class="ms-3 small">
+        <a class="nav-link sidebar-link text-dark py-1 <%= currentPath.startsWith('/accounting/accounts') ? 'active' : '' %>" href="/accounting/accounts">Chart of Accounts</a>
+        <a class="nav-link sidebar-link text-dark py-1 <%= currentPath.startsWith('/accounting/journals') ? 'active' : '' %>" href="/accounting/journals">Journals</a>
+        <a class="nav-link sidebar-link text-dark py-1 <%= currentPath.startsWith('/accounting/bank-accounts') ? 'active' : '' %>" href="/accounting/bank-accounts">Bank Accounts</a>
+        <a class="nav-link sidebar-link text-dark py-1 <%= currentPath.startsWith('/accounting/bank-transactions') ? 'active' : '' %>" href="/accounting/bank-transactions">Bank Transactions</a>
+        <a class="nav-link sidebar-link text-dark py-1 <%= currentPath === '/accounting/trial-balance' ? 'active' : '' %>" href="/accounting/trial-balance">Trial Balance</a>
+        <a class="nav-link sidebar-link text-dark py-1 <%= currentPath === '/accounting/income-statement' ? 'active' : '' %>" href="/accounting/income-statement">Income Statement</a>
+        <a class="nav-link sidebar-link text-dark py-1 <%= currentPath === '/accounting/balance-sheet' ? 'active' : '' %>" href="/accounting/balance-sheet">Balance Sheet</a>
+      </div>
     <% } %>
     <% if (hasSidebarModule('reports')) { %>
       <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/reports') ? 'active' : '' %>" href="/reports/center">Reports Center</a>
+      <a class="nav-link sidebar-link text-dark <%= currentPath.startsWith('/surveys') ? 'active' : '' %>" href="/surveys">Surveys</a>
     <% } %>
     <% if (hasSidebarModule('approvals')) { %>
       <a class="nav-link sidebar-link text-dark <%= currentPath === '/approvals' ? 'active' : '' %>" href="/approvals">Approvals</a>

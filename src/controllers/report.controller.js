@@ -14,6 +14,8 @@ const REPORT_ROUTES = {
   "activity-register": "/reports/activity-register",
   "beneficiary-summary": "/reports/beneficiary-summary",
   "indicator-progress": "/reports/indicator-progress",
+  "logframe-progress": "/reports/logframe-progress",
+  "survey-summary": "/reports/survey-summary",
   "payroll-summary": "/reports/payroll-summary",
   "expense-register": "/reports/expense-register",
   "budget-utilization": "/reports/budget-utilization"

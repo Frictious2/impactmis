@@ -1,0 +1,62 @@
+<section class="card section-card">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">System / Developer Audit Logs</h1>
+        <p class="text-muted mb-0">Shows system-wide, developer, and tenant-related platform activity.</p>
+      </div>
+    </div>
+
+    <form method="get" action="/developer/audit-logs" class="row g-3 mb-4">
+      <div class="col-md-5">
+        <label class="form-label" for="tenant_id">Tenant</label>
+        <select class="form-select" id="tenant_id" name="tenant_id">
+          <option value="">All tenants and system logs</option>
+          <% tenants.forEach((tenant) => { %>
+            <option value="<%= tenant.id %>" <%= String(filters.tenant_id) === String(tenant.id) ? 'selected' : '' %>>
+              <%= tenant.name %> (<%= tenant.tenant_code %>)
+            </option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label" for="action">Action prefix</label>
+        <input class="form-control" id="action" name="action" value="<%= filters.action %>" placeholder="license., tenant., payroll.">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-primary w-100" type="submit">Filter</button>
+      </div>
+    </form>
+
+    <% if (!logs.length) { %>
+      <p class="text-muted mb-0">No audit logs found.</p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Action</th>
+              <th>Tenant</th>
+              <th>Actor</th>
+              <th>Entity</th>
+              <th>Metadata</th>
+              <th>When</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% logs.forEach((log) => { %>
+              <tr>
+                <td><span class="fw-semibold"><%= log.action %></span></td>
+                <td><%= log.tenant_name || 'System / Developer' %></td>
+                <td><%= log.user_name || 'System' %></td>
+                <td><%= log.entity_type %> <%= log.entity_id ? `#${log.entity_id}` : '' %></td>
+                <td><code class="small"><%= log.metadata_json ? JSON.stringify(log.metadata_json) : '-' %></code></td>
+                <td><%= new Date(log.created_at).toLocaleString() %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</section>

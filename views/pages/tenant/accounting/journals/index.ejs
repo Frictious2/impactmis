@@ -1,0 +1,33 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 mb-1">Journal Entries</h1>
+    <p class="text-muted mb-0">Create balanced debit and credit journals before posting to the ledger.</p>
+  </div>
+  <a class="btn btn-success" href="/accounting/journals/create">Create Journal</a>
+</section>
+
+<section class="card border-0 shadow-sm mb-4"><div class="card-body">
+  <form class="row g-2">
+    <div class="col-md-3"><input class="form-control" name="search" value="<%= filters.search %>" placeholder="Journal or description"></div>
+    <div class="col-md-2"><select class="form-select" name="status"><option value="">All statuses</option><% journalStatusOptions.forEach((status) => { %><option value="<%= status.value %>" <%= filters.status === status.value ? 'selected' : '' %>><%= status.label %></option><% }) %></select></div>
+    <div class="col-md-2"><input class="form-control" type="date" name="date_from" value="<%= filters.date_from %>"></div>
+    <div class="col-md-2"><input class="form-control" type="date" name="date_to" value="<%= filters.date_to %>"></div>
+    <div class="col-md-2"><button class="btn btn-outline-success w-100" type="submit">Filter</button></div>
+  </form>
+</div></section>
+
+<section class="card border-0 shadow-sm"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+  <thead class="table-light"><tr><th>Journal</th><th>Date</th><th>Description</th><th>Debit</th><th>Credit</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+  <tbody>
+    <% if (!journals.length) { %><tr><td colspan="7" class="text-center text-muted py-5">No journals found.</td></tr><% } %>
+    <% journals.forEach((journal) => { %><tr>
+      <td class="fw-semibold"><%= journal.journal_number %></td>
+      <td><%= formatDate(journal.journal_date) %></td>
+      <td><%= journal.description %></td>
+      <td><%= money(journal.total_debit) %></td>
+      <td><%= money(journal.total_credit) %></td>
+      <td><span class="badge text-bg-<%= statusBadge(journal.status) %>"><%= journal.status %></span></td>
+      <td class="text-end"><a class="btn btn-sm btn-outline-success" href="/accounting/journals/<%= journal.id %>">View</a></td>
+    </tr><% }) %>
+  </tbody>
+</table></div></section>

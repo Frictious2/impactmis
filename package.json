@@ -12,7 +12,13 @@
     "backfill:finance-module": "node scripts/backfill-finance-module.js",
     "audit:license-modules": "node scripts/audit-license-modules.js",
     "audit:license-modules:fix": "node scripts/audit-license-modules.js --fix",
-    "qa:smoke": "node scripts/qa-smoke-test.js"
+    "backup": "node scripts/run-backup.js",
+    "backup:cleanup": "node scripts/cleanup-backups.js",
+    "qa:smoke": "node scripts/qa-smoke-test.js",
+    "qa:ejs": "node scripts/check-ejs.js",
+    "qa:routes": "node scripts/route-smoke-check.js",
+    "seed:demo": "node scripts/seed-demo-tenant.js",
+    "qa:pilot": "node scripts/qa-pilot.js"
   },
   "keywords": [
     "ngo",

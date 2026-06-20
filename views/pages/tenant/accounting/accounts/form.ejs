@@ -1,0 +1,48 @@
+<section class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="h4 mb-1"><%= account.id ? 'Edit Account' : 'Create Account' %></h1>
+    <p class="text-muted mb-0">GL account codes are unique within this organization.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="/accounting/accounts">Back to Accounts</a>
+</section>
+
+<section class="card border-0 shadow-sm">
+  <div class="card-body">
+    <form method="post" action="<%= formAction %>" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Account Code</label>
+        <input class="form-control" name="account_code" value="<%= account.account_code || '' %>" required>
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">Account Name</label>
+        <input class="form-control" name="account_name" value="<%= account.account_name || '' %>" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Account Type</label>
+        <select class="form-select" name="account_type" required>
+          <% accountTypes.forEach((type) => { %><option value="<%= type.value %>" <%= account.account_type === type.value ? 'selected' : '' %>><%= type.label %></option><% }) %>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Parent Account</label>
+        <select class="form-select" name="parent_account_id">
+          <option value="">None</option>
+          <% parentAccounts.forEach((parent) => { %><option value="<%= parent.id %>" <%= String(account.parent_account_id || '') === String(parent.id) ? 'selected' : '' %>><%= parent.account_code %> - <%= parent.account_name %></option><% }) %>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Status</label>
+        <select class="form-select" name="status">
+          <% statusOptions.forEach((status) => { %><option value="<%= status.value %>" <%= (account.status || 'active') === status.value ? 'selected' : '' %>><%= status.label %></option><% }) %>
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" name="description" rows="4"><%= account.description || '' %></textarea>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-success" type="submit"><%= account.id ? 'Save Changes' : 'Create Account' %></button>
+      </div>
+    </form>
+  </div>
+</section>
