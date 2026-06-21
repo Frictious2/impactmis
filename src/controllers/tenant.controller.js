@@ -12,6 +12,9 @@ const projectRepo = require("../repos/project.repo");
 const activityReportRepo = require("../repos/activity-report.repo");
 const indicatorRepo = require("../repos/indicator.repo");
 const budgetRepo = require("../repos/budget.repo");
+const attendanceRepo = require("../repos/attendance.repo");
+const expenseRepo = require("../repos/expense.repo");
+const payrollRepo = require("../repos/payroll.repo");
 const staffService = require("../services/staff.service");
 const attendanceService = require("../services/attendance.service");
 const branchService = require("../services/branch.service");
@@ -19,6 +22,8 @@ const projectService = require("../services/project.service");
 const activityReportService = require("../services/activity-report.service");
 const indicatorService = require("../services/indicator.service");
 const notificationService = require("../services/notification.service");
+const expenseService = require("../services/expense.service");
+const payrollService = require("../services/payroll.service");
 const staffRepo = require("../repos/staff.repo");
 const tenantAdminService = require("../services/tenant-admin.service");
 const {
@@ -88,6 +93,45 @@ function canApproveActivityReport(user, report) {
     return true;
   }
   return user.role === activityReportService.HR_ROLE && Boolean(report.staff_member_id);
+}
+
+function parseLicenseModules(license) {
+  const rawModules = license?.modules_json;
+  if (!rawModules) {
+    return {};
+  }
+
+  if (typeof rawModules === "object") {
+    return rawModules;
+  }
+
+  try {
+    return JSON.parse(rawModules);
+  } catch (_) {
+    return {};
+  }
+}
+
+function hasLicensedModule(req, moduleCode) {
+  const modules = parseLicenseModules(req.activeLicense);
+  if (Array.isArray(modules)) {
+    return modules.includes(moduleCode);
+  }
+
+  if (!modules || typeof modules !== "object") {
+    return false;
+  }
+
+  const rawValue = modules[moduleCode];
+  return !(
+    rawValue === false ||
+    rawValue === "false" ||
+    rawValue === 0 ||
+    rawValue === "0" ||
+    rawValue === "disabled" ||
+    rawValue === "off" ||
+    typeof rawValue === "undefined"
+  );
 }
 
 function renderNotFound(res, title) {
@@ -1770,6 +1814,69 @@ async function updateIndicatorProgress(req, res, next) {
   }
 }
 
+async function approvals(req, res, next) {
+  try {
+    const tenantId = req.currentUser.tenant_id;
+    const enabledModules = {
+      attendance: hasLicensedModule(req, "attendance"),
+      reports: hasLicensedModule(req, "reports"),
+      finance: hasLicensedModule(req, "finance"),
+      payroll: hasLicensedModule(req, "payroll")
+    };
+
+    const [
+      workflow,
+      pendingAttendance,
+      pendingActivityReports,
+      pendingExpenses,
+      payrollRuns
+    ] = await Promise.all([
+      approvalWorkflowRepo.findByTenantId(tenantId),
+      enabledModules.attendance ? attendanceRepo.listAttendance(tenantId, { approval_status: "submitted" }) : [],
+      enabledModules.reports ? activityReportRepo.listReports(tenantId, { status: "submitted" }) : [],
+      enabledModules.finance ? expenseRepo.listExpenses(tenantId, { status: "submitted" }) : [],
+      enabledModules.payroll ? payrollRepo.listPayrollRuns(tenantId) : []
+    ]);
+
+    const pendingPayrollRuns = payrollRuns.filter((run) => run.status === "submitted");
+    const approvalQueues = {
+      attendance: pendingAttendance.slice(0, 10),
+      activityReports: pendingActivityReports.slice(0, 10),
+      expenses: pendingExpenses.slice(0, 10),
+      payrollRuns: pendingPayrollRuns.slice(0, 10)
+    };
+    const approvalCounts = {
+      attendance: pendingAttendance.length,
+      activityReports: pendingActivityReports.length,
+      expenses: pendingExpenses.length,
+      payrollRuns: pendingPayrollRuns.length,
+      total:
+        pendingAttendance.length +
+        pendingActivityReports.length +
+        pendingExpenses.length +
+        pendingPayrollRuns.length
+    };
+
+    return res.render("layouts/tenant-layout", {
+      pageTitle: "Approvals",
+      contentPartial: "../pages/tenant/approvals/index",
+      breadcrumbs: [{ label: "Dashboard", href: "/dashboard" }, { label: "Approvals" }],
+      workflow,
+      enabledModules,
+      approvalQueues,
+      approvalCounts,
+      canApprove: {
+        attendance: attendanceService.APPROVER_ROLES.has(req.currentUser.role),
+        activityReports: pendingActivityReports.some((report) => canApproveActivityReport(req.currentUser, report)),
+        expenses: expenseService.APPROVE_ROLES.has(req.currentUser.role),
+        payroll: payrollService.MANAGE_ROLES.has(req.currentUser.role)
+      }
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 function settingsHome(req, res) {
   return res.render("layouts/tenant-layout", {
     pageTitle: "Settings",
@@ -2140,12 +2247,7 @@ module.exports = {
     "Reporting tools will be implemented in a future phase.",
     "Reports"
   ),
-  approvals: placeholder(
-    "Approvals",
-    "Approvals",
-    "Business approval workflows will be implemented in a future phase.",
-    "Approvals"
-  ),
+  approvals,
   settingsHome,
   organizationSettings,
   saveOrganizationSettings,

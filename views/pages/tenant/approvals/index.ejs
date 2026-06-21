@@ -1,0 +1,209 @@
+<section class="mb-4">
+  <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+    <div>
+      <h1 class="h3 mb-1">Approvals</h1>
+      <p class="text-muted mb-0">Review pending operational approvals across enabled modules for your organization.</p>
+    </div>
+    <a class="btn btn-outline-primary" href="/settings/approvals">Configure Workflow</a>
+  </div>
+</section>
+
+<section class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+      <div class="text-muted small">Attendance Pending</div>
+      <div class="display-6 fw-semibold"><%= approvalCounts.attendance %></div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+      <div class="text-muted small">Reports Pending</div>
+      <div class="display-6 fw-semibold"><%= approvalCounts.activityReports %></div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+      <div class="text-muted small">Expenses Pending</div>
+      <div class="display-6 fw-semibold"><%= approvalCounts.expenses %></div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+      <div class="text-muted small">Payroll Pending</div>
+      <div class="display-6 fw-semibold"><%= approvalCounts.payrollRuns %></div>
+    </div></div>
+  </div>
+</section>
+
+<section class="row g-4">
+  <div class="col-lg-4">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Workflow Settings</h2>
+        <% if (!workflow) { %>
+          <p class="text-muted mb-3">Approval workflow settings have not been configured yet.</p>
+          <a class="btn btn-sm btn-primary" href="/settings/approvals">Set Workflow</a>
+        <% } else { %>
+          <dl class="row mb-0">
+            <dt class="col-sm-7">Attendance</dt>
+            <dd class="col-sm-5"><%= workflow.attendance_approvals %></dd>
+            <dt class="col-sm-7">Payroll</dt>
+            <dd class="col-sm-5"><%= workflow.payroll_approvals %></dd>
+            <dt class="col-sm-7">Expenses</dt>
+            <dd class="col-sm-5"><%= workflow.expense_approvals %></dd>
+            <dt class="col-sm-7">Project Reports</dt>
+            <dd class="col-sm-5"><%= workflow.project_report_approvals %></dd>
+            <dt class="col-sm-7">Staff</dt>
+            <dd class="col-sm-5"><%= workflow.staff_approvals %></dd>
+          </dl>
+        <% } %>
+        <p class="small text-muted mt-3 mb-0">This page summarizes pending approval queues. Final approve/reject actions remain on each record detail page.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Approval Access</h2>
+        <div class="row g-2">
+          <div class="col-md-6"><span class="badge rounded-pill <%= canApprove.attendance ? 'badge-soft-success' : 'badge-soft-secondary' %>">Attendance: <%= canApprove.attendance ? 'Can approve' : 'View only' %></span></div>
+          <div class="col-md-6"><span class="badge rounded-pill <%= canApprove.activityReports ? 'badge-soft-success' : 'badge-soft-secondary' %>">Activity Reports: <%= canApprove.activityReports ? 'Can approve' : 'View only' %></span></div>
+          <div class="col-md-6"><span class="badge rounded-pill <%= canApprove.expenses ? 'badge-soft-success' : 'badge-soft-secondary' %>">Expenses: <%= canApprove.expenses ? 'Can approve' : 'View only' %></span></div>
+          <div class="col-md-6"><span class="badge rounded-pill <%= canApprove.payroll ? 'badge-soft-success' : 'badge-soft-secondary' %>">Payroll: <%= canApprove.payroll ? 'Can approve' : 'View only' %></span></div>
+        </div>
+        <p class="text-muted small mt-3 mb-0">Permission checks are still enforced by each module when you open a record.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="row g-4 mt-1">
+  <div class="col-xl-6">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">Attendance</h2>
+          <% if (enabledModules.attendance) { %><a class="btn btn-sm btn-outline-primary" href="/attendance?approval_status=submitted">View All</a><% } %>
+        </div>
+        <% if (!enabledModules.attendance) { %>
+          <p class="text-muted mb-0">Attendance module is not enabled on this license.</p>
+        <% } else if (!approvalQueues.attendance.length) { %>
+          <p class="text-muted mb-0">No attendance records are waiting for approval.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light"><tr><th>Date</th><th>Staff</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <% approvalQueues.attendance.forEach((record) => { %>
+                  <tr>
+                    <td><%= new Date(record.attendance_date).toLocaleDateString() %></td>
+                    <td><%= record.staff_code %> · <%= record.staff_name %></td>
+                    <td><span class="badge rounded-pill badge-soft-warning"><%= record.approval_status %></span></td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/attendance/<%= record.id %>">Review</a></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">Activity Reports</h2>
+          <% if (enabledModules.reports) { %><a class="btn btn-sm btn-outline-primary" href="/activity-reports?status=submitted">View All</a><% } %>
+        </div>
+        <% if (!enabledModules.reports) { %>
+          <p class="text-muted mb-0">Reports/M&E module is not enabled on this license.</p>
+        <% } else if (!approvalQueues.activityReports.length) { %>
+          <p class="text-muted mb-0">No activity reports are waiting for approval.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light"><tr><th>Report</th><th>Project</th><th>Date</th><th></th></tr></thead>
+              <tbody>
+                <% approvalQueues.activityReports.forEach((report) => { %>
+                  <tr>
+                    <td><%= report.report_code %> · <%= report.title %></td>
+                    <td><%= report.project_name %></td>
+                    <td><%= new Date(report.report_date).toLocaleDateString() %></td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/activity-reports/<%= report.id %>?tab=approval">Review</a></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">Expenses</h2>
+          <% if (enabledModules.finance) { %><a class="btn btn-sm btn-outline-primary" href="/expenses?status=submitted">View All</a><% } %>
+        </div>
+        <% if (!enabledModules.finance) { %>
+          <p class="text-muted mb-0">Finance & Expenses module is not enabled on this license.</p>
+        <% } else if (!approvalQueues.expenses.length) { %>
+          <p class="text-muted mb-0">No expenses are waiting for approval.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light"><tr><th>Expense</th><th>Category</th><th>Amount</th><th></th></tr></thead>
+              <tbody>
+                <% approvalQueues.expenses.forEach((expense) => { %>
+                  <tr>
+                    <td><%= expense.expense_code %> · <%= expense.description %></td>
+                    <td><%= expense.category_name %></td>
+                    <td>NLe <%= Number(expense.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/expenses/<%= expense.id %>">Review</a></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">Payroll</h2>
+          <% if (enabledModules.payroll) { %><a class="btn btn-sm btn-outline-primary" href="/payroll/runs">View Runs</a><% } %>
+        </div>
+        <% if (!enabledModules.payroll) { %>
+          <p class="text-muted mb-0">Payroll module is not enabled on this license.</p>
+        <% } else if (!approvalQueues.payrollRuns.length) { %>
+          <p class="text-muted mb-0">No payroll runs are waiting for approval.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light"><tr><th>Period</th><th>Net Total</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <% approvalQueues.payrollRuns.forEach((run) => { %>
+                  <tr>
+                    <td><%= run.payroll_month %>/<%= run.payroll_year %></td>
+                    <td>NLe <%= Number(run.total_net || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                    <td><span class="badge rounded-pill badge-soft-warning"><%= run.status %></span></td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/payroll/runs/<%= run.id %>">Review</a></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</section>
