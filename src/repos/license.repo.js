@@ -57,6 +57,23 @@ async function findByIdForTenant(tenantId, licenseId, db = pool) {
   return rows[0] || null;
 }
 
+async function listForDeveloper() {
+  const [rows] = await pool.query(
+    `
+      SELECT
+        l.*,
+        t.name AS tenant_name,
+        t.tenant_code,
+        t.status AS tenant_status
+      FROM licenses l
+      INNER JOIN tenants t ON t.id = l.tenant_id
+      ORDER BY l.starts_at DESC, l.id DESC
+    `
+  );
+
+  return rows;
+}
+
 async function create(payload, db = pool) {
   const [result] = await db.query(
     `
@@ -141,6 +158,7 @@ module.exports = {
   findLatestByTenantId,
   findCurrentOrLatestByTenantId,
   findByIdForTenant,
+  listForDeveloper,
   create,
   reclassifyPreviousActiveLicenses,
   updateForTenant

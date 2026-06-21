@@ -1,0 +1,73 @@
+<section class="mb-4">
+  <h1 class="h4 mb-1">Developer Settings</h1>
+  <p class="text-muted mb-0">Safe system configuration summary. Secrets and credentials are intentionally hidden.</p>
+</section>
+
+<section class="row g-4">
+  <div class="col-lg-6">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Application</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">APP_ENV</dt>
+          <dd class="col-sm-7"><%= settings.appEnv %></dd>
+          <dt class="col-sm-5">NODE_ENV</dt>
+          <dd class="col-sm-7"><%= settings.nodeEnv %></dd>
+          <dt class="col-sm-5">APP_URL</dt>
+          <dd class="col-sm-7"><%= settings.appUrl %></dd>
+          <dt class="col-sm-5">TRUST_PROXY</dt>
+          <dd class="col-sm-7"><%= settings.trustProxy ? 'true' : 'false' %></dd>
+          <dt class="col-sm-5">Maintenance</dt>
+          <dd class="col-sm-7"><%= settings.maintenanceMode ? 'Enabled' : 'Disabled' %></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Database</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">DB_HOST</dt>
+          <dd class="col-sm-7"><%= settings.dbHost %></dd>
+          <dt class="col-sm-5">DB_NAME</dt>
+          <dd class="col-sm-7"><%= settings.dbName %></dd>
+          <dt class="col-sm-5">DB_PORT</dt>
+          <dd class="col-sm-7"><%= settings.dbPort %></dd>
+          <dt class="col-sm-5">DB_CONNECTION_LIMIT</dt>
+          <dd class="col-sm-7"><%= settings.dbConnectionLimit %></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Storage</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">UPLOAD_ROOT</dt>
+          <dd class="col-sm-7"><%= settings.uploadRoot %></dd>
+          <dt class="col-sm-5">BACKUP_DIR</dt>
+          <dd class="col-sm-7"><%= settings.backupDir %></dd>
+          <dt class="col-sm-5">LOG_DIR</dt>
+          <dd class="col-sm-7"><%= settings.logDir %></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Backups</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Retention</dt>
+          <dd class="col-sm-7"><%= settings.backupRetentionDays %> days</dd>
+        </dl>
+        <a class="btn btn-outline-primary btn-sm mt-3" href="/developer/backups">Open Backups</a>
+      </div>
+    </div>
+  </div>
+</section>

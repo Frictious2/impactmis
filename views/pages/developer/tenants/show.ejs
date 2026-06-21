@@ -10,11 +10,11 @@
   <div class="d-flex flex-wrap gap-2">
     <a href="/developer/tenants/<%= tenant.id %>/licenses/new" class="btn btn-primary">Issue / Renew License</a>
     <% if (tenant.status === 'active') { %>
-      <form method="POST" action="/developer/tenants/<%= tenant.id %>/suspend">
+      <form method="POST" action="/developer/tenants/<%= tenant.id %>/suspend" onsubmit="return confirm('Are you sure you want to suspend this tenant? Tenant users may lose access.');">
         <button type="submit" class="btn btn-outline-danger">Suspend Tenant</button>
       </form>
     <% } else { %>
-      <form method="POST" action="/developer/tenants/<%= tenant.id %>/reactivate">
+      <form method="POST" action="/developer/tenants/<%= tenant.id %>/reactivate" onsubmit="return confirm('Are you sure you want to reactivate this tenant? Tenant users may regain access if the license is active.');">
         <button type="submit" class="btn btn-outline-success">Reactivate Tenant</button>
       </form>
     <% } %>
@@ -62,12 +62,15 @@
               rawModules = null;
               moduleParseFailed = true;
             }
-            const enabledModuleCodes = Array.isArray(rawModules)
-              ? rawModules
+            const moduleMap = Array.isArray(rawModules)
+              ? Object.fromEntries(rawModules.map((code) => [code, true]))
               : rawModules && typeof rawModules === 'object'
-                ? Object.keys(rawModules).filter((code) => ![false, 'false', 0, '0', 'disabled', 'off'].includes(rawModules[code]))
-                : [];
-            const moduleLabels = Object.fromEntries((moduleCatalog || []).map((module) => [module.code, module.label]));
+                ? rawModules
+                : {};
+            const moduleIsEnabled = (code) => {
+              const rawValue = moduleMap[code];
+              return !(rawValue === false || rawValue === 'false' || rawValue === 0 || rawValue === '0' || rawValue === 'disabled' || rawValue === 'off' || typeof rawValue === 'undefined');
+            };
           %>
           <div class="d-flex flex-wrap gap-2 mb-3">
             <span class="badge rounded-pill <%= currentLicense.status === 'active' ? 'badge-soft-success' : currentLicense.status === 'revoked' ? 'badge-soft-danger' : 'badge-soft-warning' %>">
@@ -90,11 +93,12 @@
               <div class="d-flex flex-wrap gap-2">
                 <% if (moduleParseFailed || !rawModules) { %>
                   <span class="badge rounded-pill badge-soft-warning">No module configuration found</span>
-                <% } else if (!enabledModuleCodes.length) { %>
-                  <span class="text-muted">No modules enabled</span>
                 <% } %>
-                <% enabledModuleCodes.forEach((module) => { %>
-                  <span class="badge rounded-pill badge-soft-primary"><%= moduleLabels[module] || module %></span>
+                <% (moduleCatalog || []).forEach((module) => { %>
+                  <% const enabled = !moduleParseFailed && rawModules && moduleIsEnabled(module.code); %>
+                  <span class="badge rounded-pill <%= enabled ? 'badge-soft-success' : 'badge-soft-secondary' %>">
+                    <%= module.label %>: <%= enabled ? 'Enabled' : 'Disabled' %>
+                  </span>
                 <% }) %>
               </div>
             </dd>

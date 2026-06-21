@@ -1,45 +1,184 @@
 <section class="mb-4">
-  <div class="row g-3">
-    <div class="col-sm-6 col-xl-3">
-      <div class="card border-0 shadow-sm stat-card">
-        <div class="card-body">
-          <div class="text-muted small">Total Tenants</div>
-          <div class="display-6 fw-semibold"><%= stats.totalTenants %></div>
-        </div>
-      </div>
+  <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+    <div>
+      <h1 class="h3 mb-1">Developer Dashboard</h1>
+      <p class="text-muted mb-0">Platform operations, tenant licensing, backups, and system health for ImpactMIS.</p>
     </div>
-    <div class="col-sm-6 col-xl-3">
-      <div class="card border-0 shadow-sm stat-card">
-        <div class="card-body">
-          <div class="text-muted small">Active Licenses</div>
-          <div class="display-6 fw-semibold"><%= stats.activeLicenses %></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-      <div class="card border-0 shadow-sm stat-card">
-        <div class="card-body">
-          <div class="text-muted small">Expiring Licenses</div>
-          <div class="display-6 fw-semibold"><%= stats.expiringLicenses %></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-      <div class="card border-0 shadow-sm stat-card">
-        <div class="card-body">
-          <div class="text-muted small">Suspended Tenants</div>
-          <div class="display-6 fw-semibold"><%= stats.suspendedTenants %></div>
-        </div>
-      </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="/developer/tenants/create">Create Tenant</a>
+      <a class="btn btn-outline-secondary" href="/developer/backups">View Backups</a>
+      <a class="btn btn-outline-secondary" href="/diagnostics">Diagnostics</a>
     </div>
   </div>
 </section>
 
-<section class="card border-0 shadow-sm">
-  <div class="card-body">
-    <h2 class="h5">Phase 0 Foundation</h2>
-    <p class="text-muted mb-0">
-      This dashboard is ready for future tenant, licensing, and system administration features.
-    </p>
+<section class="mb-4">
+  <div class="row g-3">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+        <div class="text-muted small">Total Tenants</div>
+        <div class="display-6 fw-semibold"><%= stats.totalTenants || 0 %></div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+        <div class="text-muted small">Active Tenants</div>
+        <div class="display-6 fw-semibold"><%= stats.activeTenants || 0 %></div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+        <div class="text-muted small">Suspended Tenants</div>
+        <div class="display-6 fw-semibold"><%= stats.suspendedTenants || 0 %></div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+        <div class="text-muted small">Active Licenses</div>
+        <div class="display-6 fw-semibold"><%= stats.activeLicenses || 0 %></div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+        <div class="text-muted small">Expiring in 30 Days</div>
+        <div class="display-6 fw-semibold"><%= stats.expiringLicenses || 0 %></div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+        <div class="text-muted small">Expired / Inactive Licenses</div>
+        <div class="display-6 fw-semibold"><%= stats.expiredLicenses || 0 %></div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+        <div class="text-muted small">No Active License</div>
+        <div class="display-6 fw-semibold"><%= stats.tenantsWithoutActiveLicense || 0 %></div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm stat-card"><div class="card-body">
+        <div class="text-muted small">Latest Backup</div>
+        <div class="h6 fw-semibold mb-0"><%= latestBackup ? new Date(latestBackup.created_at).toLocaleDateString() : 'None' %></div>
+        <div class="small text-muted"><%= latestBackup ? latestBackup.filename : 'Create a backup before pilot use.' %></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<section class="row g-4">
+  <div class="col-xl-6">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">Recent Tenants</h2>
+          <a class="btn btn-sm btn-outline-primary" href="/developer/tenants">View All</a>
+        </div>
+        <% if (!recentTenants.length) { %>
+          <p class="text-muted mb-0">No tenants have been created yet.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light"><tr><th>Tenant</th><th>Status</th><th>Created</th><th></th></tr></thead>
+              <tbody>
+                <% recentTenants.forEach((tenant) => { %>
+                  <tr>
+                    <td>
+                      <div class="fw-semibold"><%= tenant.name %></div>
+                      <div class="small text-muted"><%= tenant.tenant_code %></div>
+                    </td>
+                    <td><span class="badge rounded-pill <%= tenant.status === 'active' ? 'badge-soft-success' : 'badge-soft-danger' %>"><%= tenant.status %></span></td>
+                    <td><%= new Date(tenant.created_at).toLocaleDateString() %></td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/developer/tenants/<%= tenant.id %>">View</a></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">License Attention</h2>
+          <a class="btn btn-sm btn-outline-primary" href="/developer/licenses">View Licenses</a>
+        </div>
+        <% if (!licenseAttention.length) { %>
+          <p class="text-muted mb-0">No licenses need attention right now.</p>
+        <% } else { %>
+          <div class="list-group list-group-flush">
+            <% licenseAttention.forEach((item) => { %>
+              <a class="list-group-item list-group-item-action px-0" href="/developer/tenants/<%= item.tenant_id %>">
+                <div class="d-flex justify-content-between gap-3">
+                  <div>
+                    <div class="fw-semibold"><%= item.tenant_name %></div>
+                    <div class="small text-muted"><%= item.tenant_code %></div>
+                  </div>
+                  <div class="text-end">
+                    <% if (item.attention_state === 'expiring') { %>
+                      <span class="badge rounded-pill badge-soft-warning">Expiring</span>
+                      <div class="small text-muted"><%= new Date(item.active_expires_at).toLocaleDateString() %></div>
+                    <% } else if (item.attention_state === 'expired') { %>
+                      <span class="badge rounded-pill badge-soft-danger">Expired</span>
+                      <div class="small text-muted"><%= item.latest_expires_at ? new Date(item.latest_expires_at).toLocaleDateString() : 'No date' %></div>
+                    <% } else { %>
+                      <span class="badge rounded-pill badge-soft-secondary">No License</span>
+                    <% } %>
+                  </div>
+                </div>
+              </a>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-7">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">Recent System Activity</h2>
+          <a class="btn btn-sm btn-outline-primary" href="/developer/audit-logs">Audit Logs</a>
+        </div>
+        <% if (!recentAuditLogs.length) { %>
+          <p class="text-muted mb-0">No audit activity has been recorded.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light"><tr><th>Action</th><th>Entity</th><th>When</th></tr></thead>
+              <tbody>
+                <% recentAuditLogs.forEach((log) => { %>
+                  <tr>
+                    <td><%= log.action %></td>
+                    <td><%= log.entity_type %> <%= log.entity_id ? `#${log.entity_id}` : '' %></td>
+                    <td><%= new Date(log.created_at).toLocaleString() %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="card section-card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Quick Actions</h2>
+        <div class="d-grid gap-2">
+          <a class="btn btn-primary" href="/developer/tenants/create">Create Tenant</a>
+          <a class="btn btn-outline-primary" href="/developer/backups">View Backups</a>
+          <a class="btn btn-outline-primary" href="/diagnostics">Diagnostics</a>
+          <a class="btn btn-outline-primary" href="/developer/licenses">Review Licenses</a>
+        </div>
+        <p class="small text-muted mt-3 mb-0">Run <code>npm run audit:license-modules</code> on the server for a license module audit.</p>
+      </div>
+    </div>
   </div>
 </section>

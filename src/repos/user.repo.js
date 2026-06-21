@@ -118,6 +118,28 @@ async function listActiveByTenantId(tenantId) {
   return rows;
 }
 
+async function listDeveloperUsers() {
+  const [rows] = await pool.query(
+    `
+      SELECT
+        id,
+        full_name,
+        email,
+        role,
+        status,
+        must_change_password,
+        last_login_at,
+        created_at
+      FROM users
+      WHERE tenant_id IS NULL
+        AND user_type = 'developer'
+      ORDER BY created_at DESC, id DESC
+    `
+  );
+
+  return rows;
+}
+
 async function findByIdForTenant(id, tenantId, db = pool) {
   const [rows] = await db.query(
     `
@@ -199,6 +221,7 @@ module.exports = {
   listAdminUsersByTenantId,
   listByTenantId,
   listActiveByTenantId,
+  listDeveloperUsers,
   findByIdForTenant,
   existsByEmailForTenant,
   create,

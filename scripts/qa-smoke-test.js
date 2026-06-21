@@ -203,6 +203,42 @@ function checkHealthRouteExists() {
   }
 }
 
+function checkDeveloperDashboardPolish() {
+  const topbarSource = fs.readFileSync(path.join(process.cwd(), "views", "partials", "topbar.ejs"), "utf8");
+  if (
+    topbarSource.includes("showTenantMessaging") &&
+    topbarSource.includes("currentUser.user_type === 'tenant'") &&
+    topbarSource.includes("currentUser.tenant_id")
+  ) {
+    pass("developer topbar hides tenant-only notification/message links");
+  } else {
+    fail("developer topbar tenant-only link guard is missing");
+  }
+
+  [
+    "views/pages/developer/dashboard.ejs",
+    "views/pages/developer/licenses.ejs",
+    "views/pages/developer/users.ejs",
+    "views/pages/developer/settings.ejs",
+    "views/pages/developer/tenants/license-form.ejs"
+  ].forEach((relativePath) => {
+    if (fs.existsSync(path.join(process.cwd(), relativePath))) {
+      pass(`developer page exists: ${relativePath}`);
+    } else {
+      fail(`missing developer page: ${relativePath}`);
+    }
+  });
+
+  if (
+    typeof auditLogRepo.listDeveloperAuditLogsPaginated === "function" &&
+    typeof auditLogRepo.countDeveloperAuditLogs === "function"
+  ) {
+    pass("developer audit pagination methods load");
+  } else {
+    fail("developer audit pagination methods are missing");
+  }
+}
+
 function runPhase6VerifyIfAvailable() {
   const scriptPath = path.join(process.cwd(), "scripts", "verify-phase6.js");
   if (!fs.existsSync(scriptPath)) {
@@ -290,6 +326,7 @@ async function main() {
   await checkDeveloperAdmin();
   await checkAuditIsolation();
   checkHealthRouteExists();
+  checkDeveloperDashboardPolish();
   checkModuleLoads();
   checkUploadDirs();
   runPhase6VerifyIfAvailable();

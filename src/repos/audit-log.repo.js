@@ -165,6 +165,80 @@ async function listDeveloperAuditLogs(filters = {}, limit = 100) {
   return mapAuditRows(rows);
 }
 
+function buildDeveloperAuditWhere(filters = {}) {
+  const params = [];
+  const where = [];
+
+  if (filters.tenant_id) {
+    where.push("al.tenant_id = ?");
+    params.push(filters.tenant_id);
+  }
+
+  if (filters.action) {
+    where.push("al.action LIKE ?");
+    params.push(`${filters.action}%`);
+  }
+
+  if (filters.entity_type) {
+    where.push("al.entity_type = ?");
+    params.push(filters.entity_type);
+  }
+
+  if (filters.date_from) {
+    where.push("DATE(al.created_at) >= ?");
+    params.push(filters.date_from);
+  }
+
+  if (filters.date_to) {
+    where.push("DATE(al.created_at) <= ?");
+    params.push(filters.date_to);
+  }
+
+  return {
+    whereSql: where.length ? `WHERE ${where.join(" AND ")}` : "",
+    params
+  };
+}
+
+async function listDeveloperAuditLogsPaginated(filters = {}, options = {}) {
+  const limit = Math.min(Math.max(Number(options.limit || 50), 1), 200);
+  const page = Math.max(Number(options.page || 1), 1);
+  const offset = (page - 1) * limit;
+  const { whereSql, params } = buildDeveloperAuditWhere(filters);
+
+  const [rows] = await pool.query(
+    `
+      SELECT
+        al.*,
+        u.full_name AS user_name,
+        t.name AS tenant_name
+      FROM audit_logs al
+      LEFT JOIN users u ON u.id = al.user_id
+      LEFT JOIN tenants t ON t.id = al.tenant_id
+      ${whereSql}
+      ORDER BY al.created_at DESC, al.id DESC
+      LIMIT ? OFFSET ?
+    `,
+    [...params, limit, offset]
+  );
+
+  return mapAuditRows(rows);
+}
+
+async function countDeveloperAuditLogs(filters = {}) {
+  const { whereSql, params } = buildDeveloperAuditWhere(filters);
+  const [[row]] = await pool.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM audit_logs al
+      ${whereSql}
+    `,
+    params
+  );
+
+  return Number(row.total || 0);
+}
+
 async function listTenantAuditLogs(tenantId, filters = {}, limit = 100) {
   const actionScope = tenantOperationalActionWhere("al");
   const params = [tenantId, ...actionScope.params];
@@ -283,6 +357,8 @@ module.exports = {
   listByTenantId,
   countByTenantId,
   listDeveloperAuditLogs,
+  listDeveloperAuditLogsPaginated,
+  countDeveloperAuditLogs,
   listTenantAuditLogs,
   countTenantAuditLogs,
   listTenantEntityAuditLogs,

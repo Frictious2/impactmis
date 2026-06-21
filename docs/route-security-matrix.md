@@ -9,12 +9,20 @@ This matrix summarizes the intended middleware and access controls after the Pha
 | `/change-password` | GET/POST | `requireAuth` + CSRF on POST | Current authenticated user | User scoped | Required when `must_change_password` is true. |
 | `/logout` | POST | CSRF | Current authenticated user/session | User scoped | Destroys session and clears cookie. |
 | `/developer/*` | GET/POST | `requireAuth` | `requireDeveloper` | Developer-wide | Developer users must have `tenant_id = NULL`. |
+| `/developer/dashboard` | GET | `requireAuth` | Developer | Developer-wide | Shows platform metrics, license attention, recent tenants, backups, and developer audit snippets. |
 | `/developer/tenants` | GET | `requireAuth` | Developer | No tenant scope | Lists all tenants for platform administration. |
 | `/developer/tenants/create` | GET | `requireAuth` | Developer | No tenant scope | Uses module catalog including `finance`. |
 | `/developer/tenants` | POST | `requireAuth` + CSRF | Developer + tenant/license validators | New tenant scoped transaction | Creates tenant, active license, and tenant admin in one transaction. |
 | `/developer/tenants/:id/licenses/new` | GET | `requireAuth` | Developer | Tenant selected by route | License issue/renew form. |
 | `/developer/tenants/:id/licenses` | POST | `requireAuth` + CSRF | Developer + license validator | Tenant selected by route | New licenses persist normalized module access map. |
+| `/developer/tenants/:tenantId/licenses/:licenseId/edit` | GET/POST | `requireAuth` + CSRF on POST | Developer + license validator on POST | Tenant selected by route | Edits license details and normalized module access map. |
 | `/developer/tenants/:id/suspend` | POST | `requireAuth` + CSRF | Developer | Tenant selected by route | Suspended tenants are blocked by `requireActiveLicense`. |
+| `/developer/licenses` | GET | `requireAuth` | Developer | Developer-wide | Read-only cross-tenant license review with edit links. |
+| `/developer/users` | GET | `requireAuth` | Developer | Developer-wide | Lists Developer/Super Admin users only. |
+| `/developer/audit-logs` | GET | `requireAuth` | Developer | Developer-wide | Paginated developer/system audit logs with tenant/action/entity/date filters. |
+| `/developer/backups` | GET/POST | `requireAuth` + CSRF on POST | Developer | Developer-wide | Backup create/delete/download; filenames are validated by backup service. |
+| `/developer/settings` | GET | `requireAuth` | Developer | Developer-wide | Safe configuration summary; no credentials or secrets. |
+| `/diagnostics` | GET | `requireAuth` | Developer | Developer-wide | Safe diagnostics including DB host/name/port/connection limit and storage writability. |
 | `/donor/*` | GET | `requireAuth` | `requireTenantUser`, `requireActiveLicense`, `requireDonor` | Yes | Donor portal is read-only. |
 | `/donor/projects*` | GET | Tenant donor | `projects` module | Yes | Active/completed projects only. |
 | `/donor/activity-reports*` | GET | Tenant donor | `reports` module | Yes | Approved reports only. |

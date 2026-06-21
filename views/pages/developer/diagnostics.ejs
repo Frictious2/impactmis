@@ -1,12 +1,12 @@
 <section class="mb-4">
   <h1 class="h4 mb-1">Diagnostics</h1>
-  <p class="text-muted mb-0">Safe production health details for Developer users. Secrets are not displayed.</p>
+  <p class="text-muted mb-0">Safe production health details for Developer users. Secrets and credentials are not displayed.</p>
 </section>
 
 <section class="row g-3 mb-4">
   <div class="col-md-3">
     <div class="card border-0 shadow-sm"><div class="card-body">
-      <div class="text-muted small">Environment</div>
+      <div class="text-muted small">APP_ENV</div>
       <div class="h5 mb-0"><%= diagnostics.app_env %></div>
     </div></div>
   </div>
@@ -34,16 +34,58 @@
   <div class="col-lg-6">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body">
-        <h2 class="h5">Storage</h2>
+        <h2 class="h5">Application</h2>
         <dl class="row mb-0">
-          <dt class="col-sm-5">Uploads</dt>
-          <dd class="col-sm-7"><%= diagnostics.storage.upload.path %> - <%= diagnostics.storage.upload.writable ? 'Writable' : 'Not writable' %></dd>
-          <dt class="col-sm-5">Backups</dt>
-          <dd class="col-sm-7"><%= diagnostics.storage.backup.path %> - <%= diagnostics.storage.backup.writable ? 'Writable' : 'Not writable' %></dd>
+          <dt class="col-sm-5">NODE_ENV</dt>
+          <dd class="col-sm-7"><%= diagnostics.node_env %></dd>
+          <dt class="col-sm-5">APP_URL</dt>
+          <dd class="col-sm-7"><%= diagnostics.app_url %></dd>
+          <dt class="col-sm-5">TRUST_PROXY</dt>
+          <dd class="col-sm-7"><%= diagnostics.trust_proxy ? 'true' : 'false' %></dd>
+          <dt class="col-sm-5">Maintenance</dt>
+          <dd class="col-sm-7"><%= diagnostics.maintenance_mode ? 'Enabled' : 'Disabled' %></dd>
         </dl>
       </div>
     </div>
   </div>
+
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5">Database Configuration</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">DB_HOST</dt>
+          <dd class="col-sm-7"><%= diagnostics.database_config.host %></dd>
+          <dt class="col-sm-5">DB_NAME</dt>
+          <dd class="col-sm-7"><%= diagnostics.database_config.name %></dd>
+          <dt class="col-sm-5">DB_PORT</dt>
+          <dd class="col-sm-7"><%= diagnostics.database_config.port %></dd>
+          <dt class="col-sm-5">DB_CONNECTION_LIMIT</dt>
+          <dd class="col-sm-7"><%= diagnostics.database_config.connection_limit %></dd>
+        </dl>
+        <% if (!diagnostics.database.connected && diagnostics.database.error) { %>
+          <div class="alert alert-warning mt-3 mb-0">Database check failed: <%= diagnostics.database.error %></div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5">Storage</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">UPLOAD_ROOT</dt>
+          <dd class="col-sm-7"><%= diagnostics.storage.upload.path %> - <%= diagnostics.storage.upload.writable ? 'Writable' : 'Not writable' %></dd>
+          <dt class="col-sm-5">BACKUP_DIR</dt>
+          <dd class="col-sm-7"><%= diagnostics.storage.backup.path %> - <%= diagnostics.storage.backup.writable ? 'Writable' : 'Not writable' %></dd>
+          <dt class="col-sm-5">LOG_DIR</dt>
+          <dd class="col-sm-7"><%= diagnostics.storage.logs.path %> - <%= diagnostics.storage.logs.writable ? 'Writable' : 'Not writable' %></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
   <div class="col-lg-6">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body">
@@ -55,8 +97,6 @@
           <dd class="col-sm-7"><%= diagnostics.migrations.applied_count || 0 %></dd>
           <dt class="col-sm-5">Latest</dt>
           <dd class="col-sm-7"><%= diagnostics.migrations.latest_applied_at ? new Date(diagnostics.migrations.latest_applied_at).toLocaleString() : 'None' %></dd>
-          <dt class="col-sm-5">Maintenance</dt>
-          <dd class="col-sm-7"><%= diagnostics.maintenance_mode ? 'Enabled' : 'Disabled' %></dd>
         </dl>
       </div>
     </div>

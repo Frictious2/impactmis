@@ -23,12 +23,22 @@
         <div class="col-md-4">
           <label for="duration_months" class="form-label">Duration (Months)</label>
           <input id="duration_months" name="duration_months" type="number" min="1" class="form-control <%= validationMap.duration_months ? 'is-invalid' : '' %>" value="<%= formData.duration_months %>" />
+          <div class="form-text">Expiry date is calculated from Start Date + Duration Months.</div>
           <% if (validationMap.duration_months) { %><div class="invalid-feedback"><%= validationMap.duration_months %></div><% } %>
         </div>
         <div class="col-md-4">
           <label for="starts_at" class="form-label">Starts At</label>
           <input id="starts_at" name="starts_at" type="date" class="form-control <%= validationMap.starts_at ? 'is-invalid' : '' %>" value="<%= formData.starts_at %>" />
           <% if (validationMap.starts_at) { %><div class="invalid-feedback"><%= validationMap.starts_at %></div><% } %>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="expires_preview">Calculated Expiry</label>
+          <input id="expires_preview" type="text" class="form-control" value="<%= formData.expires_at || '' %>" readonly />
+          <% if (formData.expires_at) { %>
+            <div class="form-text">Current saved expiry: <%= new Date(formData.expires_at).toLocaleDateString() %>.</div>
+          <% } else { %>
+            <div class="form-text">The server recalculates this when the license is saved.</div>
+          <% } %>
         </div>
         <div class="col-md-4">
           <label for="seat_limit" class="form-label">Seat Limit</label>
@@ -74,3 +84,33 @@
     <a href="/developer/tenants/<%= tenant.id %>" class="btn btn-outline-secondary">Cancel</a>
   </div>
 </form>
+
+<script>
+  (() => {
+    const startInput = document.getElementById("starts_at");
+    const durationInput = document.getElementById("duration_months");
+    const previewInput = document.getElementById("expires_preview");
+
+    function updateExpiryPreview() {
+      if (!startInput || !durationInput || !previewInput || !startInput.value || !durationInput.value) {
+        return;
+      }
+
+      const start = new Date(`${startInput.value}T00:00:00`);
+      const duration = Number(durationInput.value);
+      if (Number.isNaN(start.getTime()) || !Number.isFinite(duration) || duration < 1) {
+        previewInput.value = "";
+        return;
+      }
+
+      const expiry = new Date(start);
+      expiry.setMonth(expiry.getMonth() + duration);
+      expiry.setDate(expiry.getDate() - 1);
+      previewInput.value = expiry.toISOString().slice(0, 10);
+    }
+
+    startInput?.addEventListener("change", updateExpiryPreview);
+    durationInput?.addEventListener("input", updateExpiryPreview);
+    updateExpiryPreview();
+  })();
+</script>

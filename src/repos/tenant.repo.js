@@ -96,6 +96,11 @@ async function getDeveloperDashboardStats() {
       (SELECT COUNT(*) FROM tenants) AS totalTenants,
       (
         SELECT COUNT(*)
+        FROM tenants
+        WHERE status = 'active'
+      ) AS activeTenants,
+      (
+        SELECT COUNT(*)
         FROM licenses
         WHERE status = 'active'
           AND NOW() BETWEEN starts_at AND expires_at
@@ -108,12 +113,109 @@ async function getDeveloperDashboardStats() {
       ) AS expiringLicenses,
       (
         SELECT COUNT(*)
+        FROM tenants t
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM licenses l
+          WHERE l.tenant_id = t.id
+            AND l.status = 'active'
+            AND NOW() BETWEEN l.starts_at AND l.expires_at
+        )
+      ) AS tenantsWithoutActiveLicense,
+      (
+        SELECT COUNT(*)
+        FROM licenses latest_license
+        INNER JOIN (
+          SELECT tenant_id, MAX(id) AS latest_id
+          FROM licenses
+          GROUP BY tenant_id
+        ) latest ON latest.latest_id = latest_license.id
+        WHERE NOT (
+          latest_license.status = 'active'
+          AND NOW() BETWEEN latest_license.starts_at AND latest_license.expires_at
+        )
+      ) AS expiredLicenses,
+      (
+        SELECT COUNT(*)
         FROM tenants
         WHERE status = 'suspended'
       ) AS suspendedTenants
   `);
 
   return totals;
+}
+
+async function listRecentForDeveloper(limit = 5) {
+  const [rows] = await pool.query(
+    `
+      SELECT id, name, tenant_code, slug, status, created_at
+      FROM tenants
+      ORDER BY created_at DESC, id DESC
+      LIMIT ?
+    `,
+    [Number(limit)]
+  );
+
+  return rows;
+}
+
+async function listLicenseAttentionForDeveloper(limit = 10) {
+  const [rows] = await pool.query(
+    `
+      SELECT
+        t.id AS tenant_id,
+        t.name AS tenant_name,
+        t.tenant_code,
+        active_license.id AS active_license_id,
+        active_license.expires_at AS active_expires_at,
+        latest_license.id AS latest_license_id,
+        latest_license.status AS latest_license_status,
+        latest_license.expires_at AS latest_expires_at,
+        CASE
+          WHEN active_license.id IS NOT NULL
+            AND active_license.expires_at BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)
+            THEN 'expiring'
+          WHEN active_license.id IS NULL AND latest_license.id IS NOT NULL
+            THEN 'expired'
+          WHEN active_license.id IS NULL AND latest_license.id IS NULL
+            THEN 'no_active_license'
+          ELSE 'ok'
+        END AS attention_state
+      FROM tenants t
+      LEFT JOIN licenses active_license
+        ON active_license.id = (
+          SELECT l1.id
+          FROM licenses l1
+          WHERE l1.tenant_id = t.id
+            AND l1.status = 'active'
+            AND NOW() BETWEEN l1.starts_at AND l1.expires_at
+          ORDER BY l1.expires_at DESC, l1.id DESC
+          LIMIT 1
+        )
+      LEFT JOIN licenses latest_license
+        ON latest_license.id = (
+          SELECT l2.id
+          FROM licenses l2
+          WHERE l2.tenant_id = t.id
+          ORDER BY l2.starts_at DESC, l2.id DESC
+          LIMIT 1
+        )
+      WHERE
+        active_license.id IS NULL
+        OR active_license.expires_at BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)
+      ORDER BY
+        CASE
+          WHEN active_license.id IS NULL AND latest_license.id IS NULL THEN 1
+          WHEN active_license.id IS NULL THEN 2
+          ELSE 3
+        END,
+        COALESCE(active_license.expires_at, latest_license.expires_at, t.created_at) ASC
+      LIMIT ?
+    `,
+    [Number(limit)]
+  );
+
+  return rows.filter((row) => row.attention_state !== "ok");
 }
 
 async function listForDeveloper(filters) {
@@ -350,6 +452,8 @@ module.exports = {
   create,
   updateStatus,
   getDeveloperDashboardStats,
+  listRecentForDeveloper,
+  listLicenseAttentionForDeveloper,
   getTenantDashboardStats,
   listForDeveloper,
   findDeveloperTenantDetailById

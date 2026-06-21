@@ -1,0 +1,58 @@
+<section class="card section-card">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="h4 mb-1">Tenant Licenses</h1>
+        <p class="text-muted mb-0">Review license status, expiry, seat limits, and enabled module counts across all tenants.</p>
+      </div>
+      <a class="btn btn-primary" href="/developer/tenants">Manage Tenants</a>
+    </div>
+
+    <% if (!licenses.length) { %>
+      <p class="text-muted mb-0">No licenses have been issued yet.</p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Tenant</th>
+              <th>Plan</th>
+              <th>Status</th>
+              <th>Start</th>
+              <th>Expiry</th>
+              <th>Seats</th>
+              <th>Modules</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% licenses.forEach((license) => { %>
+              <tr>
+                <td>
+                  <div class="fw-semibold"><%= license.tenant_name %></div>
+                  <div class="small text-muted"><%= license.tenant_code %></div>
+                </td>
+                <td><%= license.plan_name %></td>
+                <td>
+                  <span class="badge rounded-pill <%= license.status === 'active' ? 'badge-soft-success' : license.status === 'revoked' ? 'badge-soft-danger' : 'badge-soft-warning' %>">
+                    <%= license.status %>
+                  </span>
+                </td>
+                <td><%= new Date(license.starts_at).toLocaleDateString() %></td>
+                <td><%= new Date(license.expires_at).toLocaleDateString() %></td>
+                <td><%= license.seat_limit %></td>
+                <td><%= license.enabled_module_count %> enabled</td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <a class="btn btn-outline-primary" href="/developer/tenants/<%= license.tenant_id %>">Tenant</a>
+                    <a class="btn btn-outline-secondary" href="/developer/tenants/<%= license.tenant_id %>/licenses/<%= license.id %>/edit">Edit</a>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</section>

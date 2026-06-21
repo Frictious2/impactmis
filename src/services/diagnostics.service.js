@@ -55,13 +55,28 @@ async function getDiagnostics() {
     app: "ImpactMIS",
     app_env: env.appEnv,
     node_env: env.nodeEnv,
+    app_url: env.appUrl,
+    trust_proxy: env.trustProxy,
     node_version: process.version,
     uptime_seconds: Math.floor(process.uptime()),
     maintenance_mode: env.maintenanceMode,
+    database_config: {
+      host: env.dbHost,
+      name: env.dbName,
+      port: env.dbPort,
+      connection_limit: env.dbConnectionLimit
+    },
     database,
     storage: {
       upload,
-      backup
+      backup,
+      logs: (() => {
+        try {
+          return ensureWritable(env.logDir);
+        } catch (error) {
+          return { path: env.logDir, writable: false, error: error.message };
+        }
+      })()
     },
     migrations
   };
