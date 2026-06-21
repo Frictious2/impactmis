@@ -15,6 +15,7 @@ const env = {
   dbPass: process.env.DB_PASS || "",
   dbName: process.env.DB_NAME || "impactmis",
   dbPort: Number(process.env.DB_PORT || 3306),
+  dbConnectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 5),
   uploadRoot: process.env.UPLOAD_ROOT || "public/uploads",
   backupDir: process.env.BACKUP_DIR || "storage/backups",
   backupRetentionDays: Number(process.env.BACKUP_RETENTION_DAYS || 14),

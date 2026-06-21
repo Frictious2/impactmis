@@ -203,9 +203,9 @@ async function findDeveloperTenantDetailById(id) {
 }
 
 async function getTenantDashboardStats(tenantId) {
-  async function safeMetric(label, promise, fallback) {
+  async function safeMetric(label, getter, fallback) {
     try {
-      const value = typeof promise === "function" ? await promise() : await promise;
+      const value = typeof getter === "function" ? await getter() : await getter;
       return value === undefined || value === null ? fallback : value;
     } catch (error) {
       logger.error("tenant_dashboard_metric_failed", {
@@ -218,7 +218,48 @@ async function getTenantDashboardStats(tenantId) {
     }
   }
 
-  const [
+  const metricDefinitions = [
+    ["organizationProfile", () => organizationProfileRepo.findByTenantId(tenantId), null],
+    ["departmentCount", () => departmentRepo.countByTenantId(tenantId), 0],
+    ["activeUserCount", () => userRepo.countActiveByTenantId(tenantId), 0],
+    ["approvalWorkflow", () => approvalWorkflowRepo.findByTenantId(tenantId), null],
+    ["auditLogCount", () => auditLogRepo.countTenantAuditLogs(tenantId), 0],
+    ["activeStaffCount", () => staffRepo.countActiveByTenantId(tenantId), 0],
+    ["activeVolunteerCount", () => staffRepo.countActiveVolunteersByTenantId(tenantId), 0],
+    ["todayAttendanceCount", () => attendanceRepo.countTodayByTenantId(tenantId), 0],
+    ["pendingAttendanceApprovalsCount", () => attendanceRepo.countPendingApprovalsByTenantId(tenantId), 0],
+    ["totalBranches", () => branchRepo.countByTenantId(tenantId), 0],
+    ["todaySelfCheckins", () => attendanceRepo.countTodaySelfCheckinsByTenantId(tenantId), 0],
+    ["outsideGeofenceAttempts", () => attendanceRepo.countOutsideGeofenceAttemptsByTenantId(tenantId), 0],
+    ["activeProjectCount", () => projectRepo.countActiveByTenantId(tenantId), 0],
+    ["completedProjectCount", () => projectRepo.countCompletedByTenantId(tenantId), 0],
+    ["assignedProjectStaffCount", () => projectRepo.countAssignedStaffByTenantId(tenantId), 0],
+    ["overdueTaskCount", () => projectRepo.countOverdueTasksByTenantId(tenantId), 0],
+    ["submittedReportCount", () => activityReportRepo.countSubmittedByTenantId(tenantId), 0],
+    ["pendingReportApprovalsCount", () => activityReportRepo.countPendingApprovalsByTenantId(tenantId), 0],
+    ["approvedReportsThisMonthCount", () => activityReportRepo.countApprovedThisMonthByTenantId(tenantId), 0],
+    ["beneficiariesReachedThisMonth", () => activityReportRepo.sumBeneficiariesThisMonthByTenantId(tenantId), 0],
+    ["pendingPayrollApprovalCount", () => payrollRepo.countPendingApprovalByTenantId(tenantId), 0],
+    ["currentMonthPayroll", () => payrollRepo.getCurrentMonthPayrollByTenantId(tenantId), null],
+    ["expensesThisMonthCount", () => financeRepo.countExpensesThisMonth(tenantId), 0],
+    ["pendingExpenseApprovalsCount", () => financeRepo.countPendingExpenseApprovals(tenantId), 0],
+    ["approvedExpensesThisMonth", () => financeRepo.countApprovedExpensesThisMonth(tenantId), 0],
+    ["projectBudgetUtilization", () => budgetRepo.getTenantBudgetUtilization(tenantId), 0],
+    ["bankAccountsCount", () => accountingRepo.countBankAccounts(tenantId), 0],
+    ["unpostedJournalsCount", () => accountingRepo.countUnpostedJournals(tenantId), 0],
+    ["currentMonthIncome", () => accountingRepo.sumCurrentMonthByType(tenantId, "income"), 0],
+    ["currentMonthExpenses", () => accountingRepo.sumCurrentMonthByType(tenantId, "expense"), 0],
+    ["activeLogFramesCount", () => logframeRepo.countActiveByTenantId(tenantId), 0],
+    ["indicatorTrackSummary", () => measurementRepo.countOnTrack(tenantId), { onTrack: 0, offTrack: 0 }],
+    ["surveySummary", () => surveyRepo.countResponsesByTenantId(tenantId), { surveys: 0, responses: 0 }]
+  ];
+
+  const metricValues = {};
+  for (const [label, getter, fallback] of metricDefinitions) {
+    metricValues[label] = await safeMetric(label, getter, fallback);
+  }
+
+  const {
     organizationProfile,
     departmentCount,
     activeUserCount,
@@ -252,42 +293,7 @@ async function getTenantDashboardStats(tenantId) {
     activeLogFramesCount,
     indicatorTrackSummary,
     surveySummary
-  ] =
-    await Promise.all([
-      safeMetric("organizationProfile", organizationProfileRepo.findByTenantId(tenantId), null),
-      safeMetric("departmentCount", departmentRepo.countByTenantId(tenantId), 0),
-      safeMetric("activeUserCount", userRepo.countActiveByTenantId(tenantId), 0),
-      safeMetric("approvalWorkflow", approvalWorkflowRepo.findByTenantId(tenantId), null),
-      safeMetric("auditLogCount", auditLogRepo.countTenantAuditLogs(tenantId), 0),
-      safeMetric("activeStaffCount", staffRepo.countActiveByTenantId(tenantId), 0),
-      safeMetric("activeVolunteerCount", staffRepo.countActiveVolunteersByTenantId(tenantId), 0),
-      safeMetric("todayAttendanceCount", attendanceRepo.countTodayByTenantId(tenantId), 0),
-      safeMetric("pendingAttendanceApprovalsCount", attendanceRepo.countPendingApprovalsByTenantId(tenantId), 0),
-      safeMetric("totalBranches", branchRepo.countByTenantId(tenantId), 0),
-      safeMetric("todaySelfCheckins", attendanceRepo.countTodaySelfCheckinsByTenantId(tenantId), 0),
-      safeMetric("outsideGeofenceAttempts", attendanceRepo.countOutsideGeofenceAttemptsByTenantId(tenantId), 0),
-      safeMetric("activeProjectCount", projectRepo.countActiveByTenantId(tenantId), 0),
-      safeMetric("completedProjectCount", projectRepo.countCompletedByTenantId(tenantId), 0),
-      safeMetric("assignedProjectStaffCount", projectRepo.countAssignedStaffByTenantId(tenantId), 0),
-      safeMetric("overdueTaskCount", projectRepo.countOverdueTasksByTenantId(tenantId), 0),
-      safeMetric("submittedReportCount", activityReportRepo.countSubmittedByTenantId(tenantId), 0),
-      safeMetric("pendingReportApprovalsCount", activityReportRepo.countPendingApprovalsByTenantId(tenantId), 0),
-      safeMetric("approvedReportsThisMonthCount", activityReportRepo.countApprovedThisMonthByTenantId(tenantId), 0),
-      safeMetric("beneficiariesReachedThisMonth", activityReportRepo.sumBeneficiariesThisMonthByTenantId(tenantId), 0),
-      safeMetric("pendingPayrollApprovalCount", payrollRepo.countPendingApprovalByTenantId(tenantId), 0),
-      safeMetric("currentMonthPayroll", payrollRepo.getCurrentMonthPayrollByTenantId(tenantId), null),
-      safeMetric("expensesThisMonthCount", financeRepo.countExpensesThisMonth(tenantId), 0),
-      safeMetric("pendingExpenseApprovalsCount", financeRepo.countPendingExpenseApprovals(tenantId), 0),
-      safeMetric("approvedExpensesThisMonth", financeRepo.countApprovedExpensesThisMonth(tenantId), 0),
-      safeMetric("projectBudgetUtilization", budgetRepo.getTenantBudgetUtilization(tenantId), 0),
-      safeMetric("bankAccountsCount", accountingRepo.countBankAccounts(tenantId), 0),
-      safeMetric("unpostedJournalsCount", accountingRepo.countUnpostedJournals(tenantId), 0),
-      safeMetric("currentMonthIncome", accountingRepo.sumCurrentMonthByType(tenantId, "income"), 0),
-      safeMetric("currentMonthExpenses", accountingRepo.sumCurrentMonthByType(tenantId, "expense"), 0),
-      safeMetric("activeLogFramesCount", logframeRepo.countActiveByTenantId(tenantId), 0),
-      safeMetric("indicatorTrackSummary", measurementRepo.countOnTrack(tenantId), { onTrack: 0, offTrack: 0 }),
-      safeMetric("surveySummary", surveyRepo.countResponsesByTenantId(tenantId), { surveys: 0, responses: 0 })
-    ]);
+  } = metricValues;
 
   return {
     organizationConfigured: Boolean(organizationProfile),

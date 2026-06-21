@@ -7,7 +7,8 @@ function getBaseConnectionOptions(includeDatabase = true) {
     password: env.dbPass,
     port: env.dbPort,
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: env.dbConnectionLimit,
+    queueLimit: 0,
     namedPlaceholders: true,
     multipleStatements: false
   };
